@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}My Appointments - SnepStudio{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; flex-wrap: wrap; gap: 16px;">
+    <div>
+      <h1 style="font-size: 1.8rem; font-weight: 700; color: #fff;">My Studio Appointments</h1>
+      <p style="color: var(--text-muted); font-size: 0.95rem;">
+        Track the schedule, approval status, and invoices for your booked photography sessions
+      </p>
+    </div>
+    <a href="{{ url_for('book_appointment') }}" class="btn btn-primary">
+      &#43; Book Another Service
+    </a>
+  </div>
+
+  <div class="card">
+    {% if appointments %}
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Service</th>
+              <th>Date &amp; Time</th>
+              <th>Location</th>
+              <th>Status</th>
+              <th>Payment</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for appt in appointments %}
+              <tr>
+                <td><strong>#{{ appt.id }}</strong></td>
+                <td>
+                  <strong style="color: #fff;">{{ appt.service }}</strong>
+                  {% if appt.message %}
+                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; max-width: 220px;">
+                      "{{ appt.message }}"
+                    </div>
+                  {% endif %}
+                </td>
+                <td>
+                  <div>{{ appt.appointment_date }}</div>
+                  <div style="font-size: 0.85rem; color: var(--text-muted);">{{ appt.appointment_time }}</div>
+                </td>
+                <td style="max-width: 200px; font-size: 0.85rem;">{{ appt.address }}</td>
+                <td>
+                  {% if appt.status == 'Pending' %}
+                    <span class="badge badge-pending">Pending</span>
+                  {% elif appt.status == 'Approved' %}
+                    <span class="badge badge-approved">Approved</span>
+                  {% elif appt.status == 'In Progress' %}
+                    <span class="badge badge-in-progress">In Progress</span>
+                  {% elif appt.status == 'Completed' %}
+                    <span class="badge badge-completed">Completed</span>
+                  {% elif appt.status == 'Rejected' %}
+                    <span class="badge badge-rejected">Rejected</span>
+                  {% else %}
+                    <span class="badge badge-cancelled">{{ appt.status }}</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if appt.payment_status == 'Paid' %}
+                    <span class="badge badge-paid">Paid (&#8377;{{ appt.amount }})</span>
+                  {% else %}
+                    <span class="badge badge-pending">Pending (&#8377;{{ appt.amount or 999 }})</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    {% if appt.payment_status == 'Paid' and appt.payment_id %}
+                      <a href="{{ url_for('view_invoice', payment_id=appt.payment_id) }}" class="btn btn-outline btn-sm">
+                        Invoice
+                      </a>
+                    {% elif appt.payment_id %}
+                      <a href="{{ url_for('pay', payment_id=appt.payment_id) }}" class="btn btn-primary btn-sm">
+                        Pay &#8377;{{ appt.amount or 999 }}
+                      </a>
+                    {% endif %}
+
+                    {% if appt.service in ['Photo Editing', 'Video Editing'] %}
+                      <a href="{{ url_for('upload_work') }}" class="btn btn-outline btn-sm" title="Upload Media for Editing">
+                        Upload
+                      </a>
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div style="text-align: center; padding: 50px 20px; color: var(--text-muted);">
+        <div style="font-size: 2.5rem; margin-bottom: 12px;">&#128247;</div>
+        <h3>No Appointments Found</h3>
+        <p style="margin: 10px 0 20px;">You haven't scheduled any photoshoots or editing services yet.</p>
+        <a href="{{ url_for('book_appointment') }}" class="btn btn-primary">
+          Book an Appointment Now
+        </a>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+
+{% block title %}SnepStudio - Capture Your Moments{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-tagline">Studio &middot; Production &middot; Post-Processing</div>
+    <h1>Capture Your Moments</h1>
+    <p class="lead">Professional Photography, Photoshoots &amp; Editing Services</p>
+    <div class="hero-actions">
+      <a href="{{ url_for('book_appointment') }}" class="btn btn-primary">Book Your Appointment</a>
+      <a href="#services" class="btn btn-outline">Explore Services</a>
+    </div>
+  </div>
+</section>
+
+<!-- Services Section -->
+<section id="services" class="section">
+  <div class="container">
+    <div class="section-header">
+      <h2>Our Photography &amp; Editing Services</h2>
+      <p>Transparent pricing, dedicated artistic vision, and rapid turnaround for all your visual needs.</p>
+    </div>
+
+    <div class="services-grid">
+      <!-- 1. Photography -->
+      <div class="service-card">
+        <div class="service-icon">&#128247;</div>
+        <h3>Photography</h3>
+        <p>Professional photography for personal and special occasions including birthdays, portraits, and family events.</p>
+        <div class="service-pricing">
+          <div class="price-label">Starting From</div>
+          <div class="price-amount">&#8377;999</div>
+        </div>
+        <a href="{{ url_for('book_appointment') }}?service=Photography" class="btn btn-outline">Book Now</a>
+      </div>
+
+      <!-- 2. Wedding Shoot -->
+      <div class="service-card">
+        <div class="service-icon">&#128141;</div>
+        <h3>Wedding Shoot</h3>
+        <p>Comprehensive photography and cinematic videography capturing every sacred, emotional ritual of your big day.</p>
+        <div class="service-pricing">
+          <div class="price-label">Starting From</div>
+          <div class="price-amount">&#8377;9,999</div>
+        </div>
+        <a href="{{ url_for('book_appointment') }}?service=Wedding Shoot" class="btn btn-outline">Book Now</a>
+      </div>
+
+      <!-- 3. Pre-Wedding Shoot -->
+      <div class="service-card">
+        <div class="service-icon">&#10084;</div>
+        <h3>Pre-Wedding Shoot</h3>
+        <p>Creative outdoor and studio pre-wedding photography crafted around your romantic story and aesthetic themes.</p>
+        <div class="service-pricing">
+          <div class="price-label">Starting From</div>
+          <div class="price-amount">&#8377;4,999</div>
+        </div>
+        <a href="{{ url_for('book_appointment') }}?service=Pre-Wedding Shoot" class="btn btn-outline">Book Now</a>
+      </div>
+
+      <!-- 4. Photo Editing -->
+      <div class="service-card">
+        <div class="service-icon">&#127912;</div>
+        <h3>Photo Editing</h3>
+        <p>Professional color correction, skin retouching, background enhancement, and fine art styling of customer-provided photographs.</p>
+        <div class="service-pricing">
+          <div class="price-label">Pricing</div>
+          <div class="price-amount">&#8377;99 <span style="font-size: 0.9rem; font-weight: normal; color: var(--text-muted);">per photo</span></div>
+        </div>
+        <a href="{{ url_for('book_appointment') }}?service=Photo Editing" class="btn btn-outline">Book Now</a>
+      </div>
+
+      <!-- 5. Video Editing -->
+      <div class="service-card">
+        <div class="service-icon">&#127916;</div>
+        <h3>Video Editing</h3>
+        <p>Professional color grading, audio synchronization, dynamic transitions, and cinematic cuts of customer-provided video footage.</p>
+        <div class="service-pricing">
+          <div class="price-label">Pricing</div>
+          <div class="price-amount">&#8377;499 <span style="font-size: 0.9rem; font-weight: normal; color: var(--text-muted);">per video</span></div>
+        </div>
+        <a href="{{ url_for('book_appointment') }}?service=Video Editing" class="btn btn-outline">Book Now</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- How It Works Section -->
+<section class="section" style="background: rgba(24, 27, 34, 0.5); border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color);">
+  <div class="container">
+    <div class="section-header">
+      <h2>How It Works</h2>
+      <p>A streamlined four-step workflow from initial reservation to high-resolution asset delivery.</p>
+    </div>
+
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-number">1</div>
+        <h3>Register</h3>
+        <p>Create your free personal SnepStudio account with basic contact details in seconds.</p>
+      </div>
+
+      <div class="step-card">
+        <div class="step-number">2</div>
+        <h3>Book a Service</h3>
+        <p>Choose your desired photoshoot or editing service, pick your preferred date and time slot.</p>
+      </div>
+
+      <div class="step-card">
+        <div class="step-number">3</div>
+        <h3>Upload Photos/Videos</h3>
+        <p>Directly upload your raw media through our secure portal for our studio editors to process.</p>
+      </div>
+
+      <div class="step-card">
+        <div class="step-number">4</div>
+        <h3>Receive Completed Work</h3>
+        <p>Review the professionally edited outcomes, view generated invoices, and download full-res masters.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- About Section -->
+<section id="about" class="section">
+  <div class="container">
+    <div class="section-header">
+      <h2>About SnepStudio</h2>
+      <p style="max-width: 760px; line-height: 1.8;">
+        SnepStudio is a simple photography and editing management platform designed to make photography bookings, editing requests, and customer work management easier.
+      </p>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-box">
+        <h4><span>&#10003;</span> Dedicated Production Team</h4>
+        <p>Experienced photographers equipped with high-end full-frame cameras, prime lenses, and studio lighting setups.</p>
+      </div>
+      <div class="feature-box">
+        <h4><span>&#10003;</span> Transparent Service Pricing</h4>
+        <p>No recurring subscriptions or hidden charges. Pay per shoot or per edited asset according to clear rate cards.</p>
+      </div>
+      <div class="feature-box">
+        <h4><span>&#10003;</span> Centralized Client Portal</h4>
+        <p>Track your shoot schedule, monitor editing progress stages, and access invoices and completed downloads 24/7.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Contact Section -->
+<section id="contact" class="section" style="border-top: 1px solid var(--border-color);">
+  <div class="container">
+    <div class="contact-container">
+      <div class="contact-info">
+        <h3>Get in Touch</h3>
+        <p style="color: var(--text-muted); margin-bottom: 24px;">
+          Have questions about your custom photoshoot requirements or bulk editing packages? Reach out to our team.
+        </p>
+
+        <div class="contact-item">
+          <div class="service-icon" style="width: 40px; height: 40px; font-size: 1.1rem; margin-bottom: 0;">&#9993;</div>
+          <div>
+            <strong>Email Us</strong>
+            support@snepstudio.com
+          </div>
+        </div>
+
+        <div class="contact-item">
+          <div class="service-icon" style="width: 40px; height: 40px; font-size: 1.1rem; margin-bottom: 0;">&#9742;</div>
+          <div>
+            <strong>Call Us</strong>
+            +91 XXXXX XXXXX (Placeholder)
+          </div>
+        </div>
+
+        <div class="contact-item">
+          <div class="service-icon" style="width: 40px; height: 40px; font-size: 1.1rem; margin-bottom: 0;">&#128205;</div>
+          <div>
+            <strong>Studio Location</strong>
+            India (Demonstration Address)
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card" style="padding: 24px;">
+          <h4 style="margin-bottom: 16px; color: #fff;">Quick Inquiry</h4>
+          <form onsubmit="event.preventDefault(); alert('Thank you! This is a demonstration form. Please register and book an appointment.');">
+            <div class="form-group">
+              <label class="form-label">Full Name</label>
+              <input type="text" class="form-control" placeholder="Your Name" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email Address</label>
+              <input type="email" class="form-control" placeholder="yourname@domain.com" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Message</label>
+              <textarea class="form-control" rows="3" placeholder="How can we assist you?"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%;">Send Inquiry</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

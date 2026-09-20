@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}My Editing Work - SnepStudio{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; flex-wrap: wrap; gap: 16px;">
+    <div>
+      <h1 style="font-size: 1.8rem; font-weight: 700; color: #fff;">My Editing Projects</h1>
+      <p style="color: var(--text-muted); font-size: 0.95rem;">
+        Track post-production progress and download finalized edited photos &amp; videos
+      </p>
+    </div>
+    <a href="{{ url_for('upload_work') }}" class="btn btn-primary">
+      &#43; Upload More Media
+    </a>
+  </div>
+
+  <div class="card">
+    {% if work_items %}
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Work ID</th>
+              <th>Service</th>
+              <th>Original File</th>
+              <th>Type</th>
+              <th>Status</th>
+              <th>Uploaded On</th>
+              <th>Completed File &amp; Downloads</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in work_items %}
+              <tr>
+                <td><strong>#{{ item.id }}</strong></td>
+                <td>
+                  <strong>{{ item.service }}</strong>
+                  {% if item.description %}
+                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; max-width: 200px;">
+                      "{{ item.description }}"
+                    </div>
+                  {% endif %}
+                </td>
+                <td>
+                  <a href="{{ url_for('get_uploaded_file', folder=item.original_filepath.split('/')[0], filename=item.original_filepath.split('/')[1]) }}"
+                     target="_blank" style="display: inline-flex; align-items: center; gap: 4px;">
+                    &#128196; {{ item.original_filename }}
+                  </a>
+                </td>
+                <td>
+                  {% if item.file_type == 'Photo' %}
+                    <span style="color: var(--primary);">&#128248; Photo</span>
+                  {% else %}
+                    <span style="color: var(--accent);">&#127916; Video</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if item.status == 'Pending' %}
+                    <span class="badge badge-pending">Pending</span>
+                  {% elif item.status == 'In Progress' %}
+                    <span class="badge badge-in-progress">In Progress</span>
+                  {% elif item.status == 'Completed' %}
+                    <span class="badge badge-completed">Completed</span>
+                  {% else %}
+                    <span class="badge">{{ item.status }}</span>
+                  {% endif %}
+                </td>
+                <td style="font-size: 0.85rem; color: var(--text-muted);">
+                  {{ item.created_at.strftime('%b %d, %Y') if item.created_at else 'Recent' }}
+                </td>
+                <td>
+                  {% if item.status == 'Completed' and item.completed_filepath %}
+                    <div style="display: flex; gap: 8px;">
+                      <a href="{{ url_for('get_uploaded_file', folder='completed', filename=item.completed_filepath.split('/')[1]) }}"
+                         target="_blank" class="btn btn-outline btn-sm">
+                        View File
+                      </a>
+                      <a href="{{ url_for('get_uploaded_file', folder='completed', filename=item.completed_filepath.split('/')[1]) }}"
+                         download class="btn btn-success btn-sm">
+                        Download
+                      </a>
+                    </div>
+                  {% elif item.status == 'In Progress' %}
+                    <span style="font-size: 0.85rem; color: #c084fc;">Editor working on it...</span>
+                  {% else %}
+                    <span style="font-size: 0.85rem; color: var(--text-muted);">Queued for editor</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div style="text-align: center; padding: 50px 20px; color: var(--text-muted);">
+        <div style="font-size: 2.5rem; margin-bottom: 12px;">&#127912;</div>
+        <h3>No Editing Work Found</h3>
+        <p style="margin: 10px 0 20px;">Upload raw images or video clips to start an editing job.</p>
+        <a href="{{ url_for('upload_work') }}" class="btn btn-primary">
+          Upload Files for Editing
+        </a>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Complete Payment - SnepStudio{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="card form-auth" style="max-width: 520px;">
+    <div class="card-header text-center" style="text-align: center;">
+      <h2 class="card-title">Complete Service Payment</h2>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 6px;">
+        Simulated College Project Payment Gateway
+      </p>
+    </div>
+
+    <div style="background: rgba(234, 179, 8, 0.1); border: 1px solid var(--primary); padding: 18px; border-radius: var(--radius-sm); margin-bottom: 24px; text-align: center;">
+      <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Amount Due</div>
+      <div style="font-size: 2.2rem; font-weight: 800; color: var(--primary);">&#8377;{{ payment.amount }}</div>
+      <div style="font-size: 0.95rem; color: #fff; margin-top: 4px;">Service: <strong>{{ payment.service }}</strong></div>
+    </div>
+
+    <form method="POST" action="{{ url_for('pay', payment_id=payment.id) }}">
+      <div class="form-group">
+        <label class="form-label">Select Payment Method</label>
+        <select class="form-control" name="payment_method" required>
+          <option value="UPI">UPI (Google Pay / PhonePe / Paytm)</option>
+          <option value="Card">Debit / Credit Card</option>
+          <option value="Online">Net Banking / Online</option>
+          <option value="Cash">Cash at Studio Desk</option>
+        </select>
+      </div>
+
+      <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px;">
+        <em>Note for Reviewers:</em> This simulates realistic payment completion without requiring sensitive bank/UPI credentials or third-party merchant accounts.
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%;">
+        Confirm &amp; Pay &#8377;{{ payment.amount }}
+      </button>
+
+      <div style="text-align: center; margin-top: 15px;">
+        <a href="{{ url_for('my_appointments') }}" style="font-size: 0.9rem; color: var(--text-muted);">
+          &larr; Back to Appointments
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

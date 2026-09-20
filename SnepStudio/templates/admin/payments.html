@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Payments - SnepStudio Admin{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+    <div>
+      <h1 style="font-size: 1.8rem; font-weight: 700; color: #fff;">Financial Transactions &amp; Payments</h1>
+      <p style="color: var(--text-muted); font-size: 0.95rem;">
+        Track service invoices, mark received payments, and issue payment receipts
+      </p>
+    </div>
+  </div>
+
+  <div class="card">
+    {% if payments %}
+      <div class="table-responsive">
+        <table class="table filter-table">
+          <thead>
+            <tr>
+              <th>Payment ID</th>
+              <th>Customer</th>
+              <th>Appt ID</th>
+              <th>Service</th>
+              <th>Amount</th>
+              <th>Method</th>
+              <th>Status</th>
+              <th>Transaction Date</th>
+              <th>Change Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in payments %}
+              <tr>
+                <td><strong>#PAY-{{ "%04d" % p.id }}</strong></td>
+                <td>
+                  <strong>{{ p.customer_name }}</strong>
+                  <div style="font-size: 0.8rem; color: var(--text-muted);">{{ p.customer_email }}</div>
+                </td>
+                <td>#{{ p.appointment_id }}</td>
+                <td>{{ p.service }}</td>
+                <td>
+                  <strong style="color: var(--primary);">&#8377;{{ "%.2f"|format(p.amount) }}</strong>
+                </td>
+                <td>
+                  <span class="badge" style="background: rgba(255,255,255,0.05); color: #fff;">
+                    {{ p.payment_method }}
+                  </span>
+                </td>
+                <td>
+                  {% if p.payment_status == 'Paid' %}
+                    <span class="badge badge-paid">Paid</span>
+                  {% elif p.payment_status == 'Pending' %}
+                    <span class="badge badge-pending">Pending</span>
+                  {% elif p.payment_status == 'Failed' %}
+                    <span class="badge badge-danger">Failed</span>
+                  {% elif p.payment_status == 'Refunded' %}
+                    <span class="badge" style="background: #475569; color: #fff;">Refunded</span>
+                  {% else %}
+                    <span class="badge">{{ p.payment_status }}</span>
+                  {% endif %}
+                </td>
+                <td style="font-size: 0.85rem; color: var(--text-muted);">
+                  {{ p.payment_date.strftime('%b %d, %Y %I:%M %p') if p.payment_date else 'N/A' }}
+                </td>
+                <td>
+                  <form method="POST" action="{{ url_for('admin_update_payment_status', id=p.id) }}" style="display: flex; gap: 6px;">
+                    <select name="status" class="form-control" style="font-size: 0.8rem; padding: 4px 6px; width: 110px;">
+                      <option value="Paid" {% if p.payment_status == 'Paid' %}selected{% endif %}>Paid</option>
+                      <option value="Pending" {% if p.payment_status == 'Pending' %}selected{% endif %}>Pending</option>
+                      <option value="Failed" {% if p.payment_status == 'Failed' %}selected{% endif %}>Failed</option>
+                      <option value="Refunded" {% if p.payment_status == 'Refunded' %}selected{% endif %}>Refunded</option>
+                    </select>
+                    <button type="submit" class="btn btn-outline btn-sm" style="padding: 4px 8px; font-size: 0.75rem;">
+                      Save
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+        No payment transactions recorded yet.
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

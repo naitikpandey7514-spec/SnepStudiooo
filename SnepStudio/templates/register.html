@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Register - SnepStudio{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="card form-auth">
+    <div class="card-header text-center" style="text-align: center;">
+      <h2 class="card-title">Create Your Client Account</h2>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 6px;">
+        Register to book photoshoot slots and manage your media editing orders
+      </p>
+    </div>
+
+    <form method="POST" action="{{ url_for('register') }}" id="registerForm">
+      <div class="form-group">
+        <label class="form-label" for="name">Full Name <span style="color: var(--danger);">*</span></label>
+        <input type="text" class="form-control" id="name" name="name" placeholder="John Doe" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="email">Email Address <span style="color: var(--danger);">*</span></label>
+        <input type="email" class="form-control" id="email" name="email" placeholder="john@example.com" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">Password <span style="color: var(--danger);">*</span></label>
+        <input type="password" class="form-control" id="password" name="password" minlength="6" placeholder="At least 6 characters" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="phone">Phone Number <span style="color: var(--danger);">*</span></label>
+        <input type="tel" class="form-control" id="phone" name="phone" placeholder="+91 9876543210" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="address">Address <span style="color: var(--danger);">*</span></label>
+        <textarea class="form-control" id="address" name="address" rows="3" placeholder="Your residential or billing address" required></textarea>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
+        Complete Registration
+      </button>
+
+      <div style="text-align: center; margin-top: 20px; font-size: 0.9rem; color: var(--text-muted);">
+        Already have an account? <a href="{{ url_for('login') }}" style="font-weight: 600;">Login here</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

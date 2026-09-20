@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Login - SnepStudio{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="card form-auth" style="border-color: var(--primary);">
+    <div class="card-header text-center" style="text-align: center;">
+      <div style="font-size: 2.2rem; margin-bottom: 8px;">&#128274;</div>
+      <h2 class="card-title">Studio Admin Authentication</h2>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 6px;">
+        Staff &amp; Management Control Panel
+      </p>
+    </div>
+
+    <form method="POST" action="{{ url_for('admin_login') }}">
+      <div class="form-group">
+        <label class="form-label" for="username">Admin Username</label>
+        <input type="text" class="form-control" id="username" name="username" placeholder="admin" required autofocus>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">Admin Password</label>
+        <input type="password" class="form-control" id="password" name="password" placeholder="admin123" required>
+      </div>
+
+      <div style="background: rgba(234, 179, 8, 0.1); border: 1px solid var(--border-color); padding: 12px; border-radius: var(--radius-sm); margin-bottom: 20px; font-size: 0.85rem; color: var(--text-muted);">
+        <strong>Demo Admin Credentials:</strong><br>
+        Username: <code style="color: var(--primary);">admin</code> | Password: <code style="color: var(--primary);">admin123</code>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%;">
+        Authenticate as Admin
+      </button>
+
+      <div style="text-align: center; margin-top: 18px; font-size: 0.85rem;">
+        <a href="{{ url_for('login') }}">&larr; Return to Customer Portal</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

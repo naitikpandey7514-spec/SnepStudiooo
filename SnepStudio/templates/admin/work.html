@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Editing Queue - SnepStudio Admin{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+    <div>
+      <h1 style="font-size: 1.8rem; font-weight: 700; color: #fff;">Post-Production &amp; Editing Queue</h1>
+      <p style="color: var(--text-muted); font-size: 0.95rem;">
+        Review client-uploaded raw media, perform edits in your studio software, and upload finalized masters
+      </p>
+    </div>
+
+    <!-- Filter by Status -->
+    <form method="GET" action="{{ url_for('admin_work') }}">
+      <select name="status" class="form-control" style="width: 180px;" onchange="this.form.submit()">
+        <option value="">All Work Statuses</option>
+        <option value="Pending" {% if status_filter == 'Pending' %}selected{% endif %}>Pending Queue</option>
+        <option value="In Progress" {% if status_filter == 'In Progress' %}selected{% endif %}>In Progress</option>
+        <option value="Completed" {% if status_filter == 'Completed' %}selected{% endif %}>Completed Delivery</option>
+      </select>
+    </form>
+  </div>
+
+  <div class="card">
+    {% if work_items %}
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Work ID</th>
+              <th>Customer</th>
+              <th>Appt / Service</th>
+              <th>Raw Customer File</th>
+              <th>Current Status</th>
+              <th>Editor Actions &amp; Deliverables</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in work_items %}
+              <tr>
+                <td><strong>#{{ item.id }}</strong></td>
+                <td>
+                  <strong>{{ item.customer_name }}</strong>
+                  <div style="font-size: 0.8rem; color: var(--text-muted);">{{ item.customer_email }}</div>
+                </td>
+                <td>
+                  <div>{{ item.service }}</div>
+                  <small style="color: var(--text-muted);">
+                    Appt: #{{ item.appointment_id or 'General' }}
+                  </small>
+                  {% if item.description %}
+                    <div style="font-size: 0.8rem; color: #cbd5e1; background: rgba(0,0,0,0.3); padding: 4px 6px; border-radius: 4px; margin-top: 4px;">
+                      <em>"{{ item.description }}"</em>
+                    </div>
+                  {% endif %}
+                </td>
+                <td>
+                  <a href="{{ url_for('get_uploaded_file', folder=item.original_filepath.split('/')[0], filename=item.original_filepath.split('/')[1]) }}"
+                     target="_blank" class="btn btn-outline btn-sm">
+                    &#128229; Download Raw ({{ item.file_type }})
+                  </a>
+                  <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">
+                    {{ item.original_filename }}
+                  </div>
+                </td>
+                <td>
+                  {% if item.status == 'Pending' %}
+                    <span class="badge badge-pending">Pending</span>
+                  {% elif item.status == 'In Progress' %}
+                    <span class="badge badge-in-progress">In Progress</span>
+                  {% elif item.status == 'Completed' %}
+                    <span class="badge badge-completed">Completed</span>
+                  {% else %}
+                    <span class="badge">{{ item.status }}</span>
+                  {% endif %}
+
+                  <!-- Quick Status Toggle -->
+                  <div style="margin-top: 8px;">
+                    {% if item.status == 'Pending' %}
+                      <form method="POST" action="{{ url_for('admin_update_work_status', id=item.id) }}">
+                        <input type="hidden" name="status" value="In Progress">
+                        <button type="submit" class="btn btn-outline btn-sm" style="font-size: 0.75rem;">
+                          &rarr; Start Work
+                        </button>
+                      </form>
+                    {% elif item.status == 'In Progress' %}
+                      <form method="POST" action="{{ url_for('admin_update_work_status', id=item.id) }}">
+                        <input type="hidden" name="status" value="Completed">
+                        <button type="submit" class="btn btn-success btn-sm" style="font-size: 0.75rem;">
+                          &#10003; Mark Completed
+                        </button>
+                      </form>
+                    {% endif %}
+                  </div>
+                </td>
+                <td>
+                  <!-- Upload Completed Master File Form -->
+                  <form method="POST" action="{{ url_for('admin_upload_completed_work', id=item.id) }}"
+                        enctype="multipart/form-data" style="background: rgba(255,255,255,0.02); padding: 8px; border-radius: 6px; border: 1px dashed var(--border-color);">
+                    <div style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: var(--text-muted);">
+                      Upload Edited Master
+                    </div>
+                    <input type="file" name="completed_file" class="form-control" style="font-size: 0.75rem; padding: 4px 6px; margin-bottom: 6px;" required>
+                    <button type="submit" class="btn btn-primary btn-sm" style="width: 100%; font-size: 0.75rem;">
+                      Upload &amp; Mark Completed
+                    </button>
+                  </form>
+
+                  {% if item.completed_filepath %}
+                    <div style="margin-top: 8px;">
+                      <a href="{{ url_for('get_uploaded_file', folder='completed', filename=item.completed_filepath.split('/')[1]) }}"
+                         target="_blank" style="font-size: 0.8rem; color: var(--success); display: inline-flex; align-items: center; gap: 4px;">
+                        &#10003; Delivered: {{ item.completed_filename }}
+                      </a>
+                    </div>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+        No editing assignments found in queue.
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,6 @@
+{
+  "name": "SnepStudio",
+  "description": "Capture Your Moments. SnepStudio is a premier photography and creative editing studio offering weddings, pre-weddings, portraits, and professional photo & video editing.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

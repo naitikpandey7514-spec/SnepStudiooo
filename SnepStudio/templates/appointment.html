@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}Book Appointment - SnepStudio{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="card" style="max-width: 720px; margin: 0 auto;">
+    <div class="card-header">
+      <h2 class="card-title">Book an Appointment or Service</h2>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 4px;">
+        Choose your desired session and let our studio crew prepare equipment &amp; schedule
+      </p>
+    </div>
+
+    <form method="POST" action="{{ url_for('book_appointment') }}">
+      <!-- Service Selection -->
+      <div class="form-group">
+        <label class="form-label" for="service">Select Service <span style="color: var(--danger);">*</span></label>
+        <select class="form-control" id="service" name="service" required>
+          <option value="">-- Choose a Studio Service --</option>
+          <option value="Photography" {% if preselected_service == 'Photography' %}selected{% endif %}>
+            Photography (Starting &#8377;999)
+          </option>
+          <option value="Wedding Shoot" {% if preselected_service == 'Wedding Shoot' %}selected{% endif %}>
+            Wedding Shoot (Starting &#8377;9,999)
+          </option>
+          <option value="Pre-Wedding Shoot" {% if preselected_service == 'Pre-Wedding Shoot' %}selected{% endif %}>
+            Pre-Wedding Shoot (Starting &#8377;4,999)
+          </option>
+          <option value="Photo Editing" {% if preselected_service == 'Photo Editing' %}selected{% endif %}>
+            Photo Editing (&#8377;99 per photo)
+          </option>
+          <option value="Video Editing" {% if preselected_service == 'Video Editing' %}selected{% endif %}>
+            Video Editing (&#8377;499 per video)
+          </option>
+        </select>
+      </div>
+
+      <!-- Date & Time -->
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="appointment_date">Preferred Date <span style="color: var(--danger);">*</span></label>
+          <input type="date" class="form-control" id="appointment_date" name="appointment_date" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="appointment_time">Preferred Time Slot <span style="color: var(--danger);">*</span></label>
+          <input type="time" class="form-control" id="appointment_time" name="appointment_time" required>
+        </div>
+      </div>
+
+      <!-- Customer Contact Details -->
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="customer_name">Customer Name <span style="color: var(--danger);">*</span></label>
+          <input type="text" class="form-control" id="customer_name" name="customer_name"
+                 value="{{ user_info.name or session.get('user_name', '') }}" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="phone">Contact Phone <span style="color: var(--danger);">*</span></label>
+          <input type="tel" class="form-control" id="phone" name="phone"
+                 value="{{ user_info.phone or '' }}" required>
+        </div>
+      </div>
+
+      <!-- Location / Address -->
+      <div class="form-group">
+        <label class="form-label" for="address">Photoshoot Location or Studio Address <span style="color: var(--danger);">*</span></label>
+        <textarea class="form-control" id="address" name="address" rows="2"
+                  placeholder="Studio Visit or specify On-Location venue address" required>{{ user_info.address or '' }}</textarea>
+      </div>
+
+      <!-- Additional Message / Special Instructions -->
+      <div class="form-group">
+        <label class="form-label" for="message">Additional Message / Special Requirements</label>
+        <textarea class="form-control" id="message" name="message" rows="3"
+                  placeholder="e.g., Theme preference, number of outfits, expected deliverables, specific angles..."></textarea>
+      </div>
+
+      <div style="background: rgba(234, 179, 8, 0.08); border: 1px dashed var(--primary); padding: 14px 18px; border-radius: var(--radius-sm); margin-bottom: 24px; font-size: 0.9rem;">
+        <strong>&#128161; Note:</strong> Once submitted, your appointment status will default to <strong>Pending</strong>. Our studio manager will review equipment and photographer availability, then update your status to <strong>Approved</strong>.
+      </div>
+
+      <div style="display: flex; gap: 14px; justify-content: flex-end;">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-outline">Cancel</a>
+        <button type="submit" class="btn btn-primary">Confirm &amp; Book Appointment</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  // Set minimum date to today
+  document.addEventListener("DOMContentLoaded", () => {
+    const today = new Date().toISOString().split("T")[0];
+    const dateInput = document.getElementById("appointment_date");
+    if (dateInput) {
+      dateInput.min = today;
+    }
+  });
+</script>
+{% endblock %}

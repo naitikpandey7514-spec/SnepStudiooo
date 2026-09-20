@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - SnepStudio Management{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; flex-wrap: wrap; gap: 16px;">
+    <div>
+      <h1 style="font-size: 2rem; font-weight: 700; color: #fff;">
+        Studio Administration Control
+      </h1>
+      <p style="color: var(--text-muted); font-size: 0.95rem;">
+        Logged in as: <strong>{{ session.get('admin_username', 'admin') }}</strong> | Real-time Studio Statistics
+      </p>
+    </div>
+    <div style="display: flex; gap: 10px;">
+      <a href="{{ url_for('admin_appointments') }}" class="btn btn-outline btn-sm">Manage Appointments</a>
+      <a href="{{ url_for('admin_work') }}" class="btn btn-primary btn-sm">Process Work Queue</a>
+    </div>
+  </div>
+
+  <!-- Admin Stats Grid -->
+  <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+    <div class="stat-card">
+      <div class="stat-title">Total Registered Users</div>
+      <div class="stat-value">{{ stats.total_users }}</div>
+      <a href="{{ url_for('admin_users') }}" style="font-size: 0.8rem; color: var(--accent); margin-top: 6px; display: inline-block;">View Users &rarr;</a>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-title">Total Appointments</div>
+      <div class="stat-value">{{ stats.total_appointments }}</div>
+      <span style="font-size: 0.8rem; color: var(--text-muted);">All-time bookings</span>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-title">Pending Appointments</div>
+      <div class="stat-value highlight">{{ stats.pending_appointments }}</div>
+      <span style="font-size: 0.8rem; color: var(--warning);">Needs studio review</span>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-title">Approved Appointments</div>
+      <div class="stat-value" style="color: var(--accent);">{{ stats.approved_appointments }}</div>
+      <span style="font-size: 0.8rem; color: var(--text-muted);">Scheduled &amp; confirmed</span>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-title">Completed Appointments</div>
+      <div class="stat-value" style="color: var(--success);">{{ stats.completed_appointments }}</div>
+      <span style="font-size: 0.8rem; color: var(--text-muted);">Successfully delivered</span>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-title">Pending Work Items</div>
+      <div class="stat-value highlight">{{ stats.pending_work }}</div>
+      <a href="{{ url_for('admin_work') }}" style="font-size: 0.8rem; color: var(--primary); margin-top: 6px; display: inline-block;">Open Work Queue &rarr;</a>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-title">Completed Work Items</div>
+      <div class="stat-value" style="color: var(--success);">{{ stats.completed_work }}</div>
+      <span style="font-size: 0.8rem; color: var(--text-muted);">Edited files delivered</span>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-title">Paid Transactions</div>
+      <div class="stat-value" style="color: var(--success);">{{ stats.total_payments }}</div>
+      <span style="font-size: 0.85rem; font-weight: 600; color: #fff;">&#8377;{{ "%.2f"|format(stats.total_revenue) }}</span>
+    </div>
+  </div>
+
+  <!-- Recent Appointments Section -->
+  <div class="card">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+      <h3 class="card-title">Recent Studio Bookings</h3>
+      <a href="{{ url_for('admin_appointments') }}" style="font-size: 0.85rem;">View All &rarr;</a>
+    </div>
+
+    {% if recent_appointments %}
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Customer</th>
+              <th>Service</th>
+              <th>Date &amp; Time</th>
+              <th>Status</th>
+              <th>Payment</th>
+              <th>Quick Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for appt in recent_appointments %}
+              <tr>
+                <td><strong>#{{ appt.id }}</strong></td>
+                <td>
+                  <strong>{{ appt.customer_name }}</strong>
+                  <div style="font-size: 0.8rem; color: var(--text-muted);">{{ appt.phone }}</div>
+                </td>
+                <td>{{ appt.service }}</td>
+                <td>{{ appt.appointment_date }} at {{ appt.appointment_time }}</td>
+                <td>
+                  {% if appt.status == 'Pending' %}
+                    <span class="badge badge-pending">Pending</span>
+                  {% elif appt.status == 'Approved' %}
+                    <span class="badge badge-approved">Approved</span>
+                  {% elif appt.status == 'In Progress' %}
+                    <span class="badge badge-in-progress">In Progress</span>
+                  {% elif appt.status == 'Completed' %}
+                    <span class="badge badge-completed">Completed</span>
+                  {% elif appt.status == 'Rejected' %}
+                    <span class="badge badge-rejected">Rejected</span>
+                  {% else %}
+                    <span class="badge">{{ appt.status }}</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if appt.payment_status == 'Paid' %}
+                    <span class="badge badge-paid">Paid</span>
+                  {% else %}
+                    <span class="badge badge-pending">Pending</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if appt.status == 'Pending' %}
+                    <div style="display: flex; gap: 6px;">
+                      <form method="POST" action="{{ url_for('admin_update_appointment_status', id=appt.id) }}" style="display: inline;">
+                        <input type="hidden" name="status" value="Approved">
+                        <button type="submit" class="btn btn-success btn-sm" title="Approve Booking">&#10003; Approve</button>
+                      </form>
+                      <form method="POST" action="{{ url_for('admin_update_appointment_status', id=appt.id) }}" style="display: inline;">
+                        <input type="hidden" name="status" value="Rejected">
+                        <button type="submit" class="btn btn-danger btn-sm" data-confirm="Reject this appointment?" title="Reject Booking">&#10005; Reject</button>
+                      </form>
+                    </div>
+                  {% else %}
+                    <a href="{{ url_for('admin_appointments') }}?search={{ appt.id }}" class="btn btn-outline btn-sm">
+                      Manage
+                    </a>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+        No customer appointments yet.
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

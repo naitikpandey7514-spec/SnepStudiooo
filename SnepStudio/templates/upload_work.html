@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Media for Editing - SnepStudio{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="card" style="max-width: 680px; margin: 0 auto;">
+    <div class="card-header">
+      <h2 class="card-title">Upload Photos or Videos for Editing</h2>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 4px;">
+        Submit raw camera media for professional studio retouching, grading, and post-processing
+      </p>
+    </div>
+
+    <form method="POST" action="{{ url_for('upload_work') }}" enctype="multipart/form-data">
+      <!-- Associate Appointment -->
+      <div class="form-group">
+        <label class="form-label" for="appointment_id">Associate with Appointment (Optional)</label>
+        <select class="form-control" id="appointment_id" name="appointment_id">
+          <option value="">-- General Upload / No Specific Appointment --</option>
+          {% for appt in appointments %}
+            <option value="{{ appt.id }}">
+              Appointment #{{ appt.id }} - {{ appt.service }} ({{ appt.appointment_date }})
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- File Type -->
+      <div class="form-group">
+        <label class="form-label" for="file_type">Media Category <span style="color: var(--danger);">*</span></label>
+        <select class="form-control" id="file_type" name="file_type" required>
+          <option value="Photo">Photograph (JPG, JPEG, PNG, WEBP)</option>
+          <option value="Video">Video Footage (MP4, MOV)</option>
+        </select>
+      </div>
+
+      <!-- File Input -->
+      <div class="form-group">
+        <label class="form-label" for="file">Select Raw File <span style="color: var(--danger);">*</span></label>
+        <input type="file" class="form-control" id="file" name="file" accept=".jpg,.jpeg,.png,.webp,.mp4,.mov" required>
+        <small style="color: var(--text-muted); display: block; margin-top: 6px;">
+          Permitted file types: <strong>.jpg, .jpeg, .png, .webp, .mp4, .mov</strong>. Max file size: <strong>50MB</strong>.
+        </small>
+      </div>
+
+      <!-- Editing Instructions / Description -->
+      <div class="form-group">
+        <label class="form-label" for="description">Editing Instructions / Desired Outcome</label>
+        <textarea class="form-control" id="description" name="description" rows="3"
+                  placeholder="Specify desired edits: e.g., warm golden color grade, skin blemishes retouch, portrait crop, audio denoising, or cinematic look..."></textarea>
+      </div>
+
+      <div style="background: rgba(56, 189, 248, 0.08); border: 1px dashed var(--accent); padding: 14px 18px; border-radius: var(--radius-sm); margin-bottom: 24px; font-size: 0.9rem;">
+        <strong>&#128249; Studio Workflow:</strong> Your media is routed to our professional editing workstation. Once processed, our senior editor will attach the finished high-resolution master file to your account for direct download.
+      </div>
+
+      <div style="display: flex; gap: 14px; justify-content: flex-end;">
+        <a href="{{ url_for('my_work') }}" class="btn btn-outline">Cancel</a>
+        <button type="submit" class="btn btn-primary">Submit for Editing</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

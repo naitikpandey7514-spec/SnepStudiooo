@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Registered Users - SnepStudio Admin{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+    <div>
+      <h1 style="font-size: 1.8rem; font-weight: 700; color: #fff;">Registered Clients Directory</h1>
+      <p style="color: var(--text-muted); font-size: 0.95rem;">
+        Secure directory of verified client profiles and contact information
+      </p>
+    </div>
+
+    <!-- Search Form -->
+    <form method="GET" action="{{ url_for('admin_users') }}" style="display: flex; gap: 8px;">
+      <input type="text" name="search" class="form-control" style="width: 240px;" placeholder="Search name, email, phone..." value="{{ search }}">
+      <button type="submit" class="btn btn-primary btn-sm">Search</button>
+      {% if search %}
+        <a href="{{ url_for('admin_users') }}" class="btn btn-outline btn-sm">Clear</a>
+      {% endif %}
+    </form>
+  </div>
+
+  <div class="card">
+    {% if users %}
+      <div class="table-responsive">
+        <table class="table filter-table">
+          <thead>
+            <tr>
+              <th>Client ID</th>
+              <th>Full Name</th>
+              <th>Email Address</th>
+              <th>Phone Number</th>
+              <th>Billing / Shoot Address</th>
+              <th>Registration Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for user in users %}
+              <tr>
+                <td><strong>#{{ user.id }}</strong></td>
+                <td>
+                  <strong style="color: #fff;">{{ user.name }}</strong>
+                </td>
+                <td>{{ user.email }}</td>
+                <td>{{ user.phone }}</td>
+                <td style="max-width: 260px; font-size: 0.85rem;">{{ user.address }}</td>
+                <td style="font-size: 0.85rem; color: var(--text-muted);">
+                  {{ user.created_at.strftime('%b %d, %Y %I:%M %p') if user.created_at else 'N/A' }}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+        No client accounts matching your query.
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
