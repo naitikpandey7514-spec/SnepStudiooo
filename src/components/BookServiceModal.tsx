@@ -62,7 +62,7 @@ export const BookServiceModal: React.FC<BookServiceModalProps> = ({
       appointment_time: appointmentTime,
       customer_name: name || 'Valued Client',
       phone: phone || '+91 98765 43210',
-      address: address || 'SnepStudio Studio 4, Pune',
+      address: address || 'Plot 42, Floor 2, Creative Arts Enclave, Off Linking Road, Bandra West, Mumbai - 400050',
       message: message,
       amount: currentServiceObj.numericPrice,
     });

@@ -17,11 +17,13 @@ import { BookServiceModal } from './components/BookServiceModal';
 import { InvoiceModal } from './components/InvoiceModal';
 import { AdminPortal } from './components/AdminPortal';
 import { ProofingPortalView } from './components/ProofingPortalView';
+import { EmployeeDashboard } from './components/EmployeeDashboard';
 import { UserRecord, AppointmentRecord, WorkRecord, ShootBatchRecord, StudioShopProfile, EmployeeRecord } from './types';
 import { INITIAL_SHOOT_BATCHES } from './data/shootBatches';
 import { INITIAL_STUDIO_SHOP, INITIAL_STUDIO_EMPLOYEES, PRESEEDED_ACCOUNTS, StoredAuthAccount } from './data/studioData';
+import { StudioService, STUDIO_SERVICES } from './data/photographyData';
 
-// Pre-seeded initial studio client state
+// Initial pre-seeded customer demo record
 const INITIAL_USER: UserRecord = {
   id: 101,
   name: 'Rohan Sharma',
@@ -29,6 +31,7 @@ const INITIAL_USER: UserRecord = {
   phone: '+91 98765 43210',
   address: 'Silver Sands, Juhu Beach Road, Mumbai',
   created_at: '2026-02-15',
+  role: 'customer'
 };
 
 const INITIAL_BOOKINGS: AppointmentRecord[] = [
@@ -47,6 +50,8 @@ const INITIAL_BOOKINGS: AppointmentRecord[] = [
     payment_id: 501,
     amount: 9999,
     payment_method: 'UPI / Google Pay',
+    assigned_employee_id: 'EMP-0001',
+    assigned_employee_name: 'Arjun Mehta'
   },
   {
     id: 1002,
@@ -62,6 +67,8 @@ const INITIAL_BOOKINGS: AppointmentRecord[] = [
     payment_status: 'Pending',
     payment_id: 502,
     amount: 4999,
+    assigned_employee_id: 'EMP-0002',
+    assigned_employee_name: 'Kavita Iyer'
   },
 ];
 
@@ -78,6 +85,8 @@ const INITIAL_WORK_ITEMS: WorkRecord[] = [
     status: 'Completed',
     completed_filename: 'SnepStudio_Master_Ceremony_4K.jpg',
     created_at: '2026-03-01',
+    assigned_employee_id: 'EMP-0001',
+    assigned_employee_name: 'Arjun Mehta'
   },
   {
     id: 202,
@@ -90,26 +99,31 @@ const INITIAL_WORK_ITEMS: WorkRecord[] = [
     description: 'Cinematic 60fps slow-motion cut synced with romantic orchestral score.',
     status: 'In Progress',
     created_at: '2026-03-08',
+    assigned_employee_id: 'EMP-0004',
+    assigned_employee_name: 'Sameer Sheikh'
   },
 ];
 
 export default function App() {
-  // Navigation
+  // Navigation: Directly opens to Home page
   const [activePage, setActivePage] = useState<string>('home');
 
-  // Customer / Admin / Staff Session
-  const [currentUser, setCurrentUser] = useState<UserRecord | null>(INITIAL_USER);
+  // Authentication State
+  const [currentUser, setCurrentUser] = useState<UserRecord | null>(null);
 
-  // Studio Business Details & Physical Address Profile
+  // Studio Details & Profile
   const [shopProfile, setShopProfile] = useState<StudioShopProfile>(INITIAL_STUDIO_SHOP);
 
-  // Studio Crew & Staff
+  // Studio Crew & Employees
   const [employees, setEmployees] = useState<EmployeeRecord[]>(INITIAL_STUDIO_EMPLOYEES);
 
-  // Authentication Accounts & One-Time Login Enforcement Store
+  // Authentication Accounts (Customer, Employee, Admin)
   const [accounts, setAccounts] = useState<StoredAuthAccount[]>(PRESEEDED_ACCOUNTS);
 
-  // Studio Records
+  // Studio Services
+  const [services, setServices] = useState<StudioService[]>(STUDIO_SERVICES);
+
+  // Studio Data
   const [bookings, setBookings] = useState<AppointmentRecord[]>(INITIAL_BOOKINGS);
   const [workItems, setWorkItems] = useState<WorkRecord[]>(INITIAL_WORK_ITEMS);
   const [shootBatches, setShootBatches] = useState<ShootBatchRecord[]>(INITIAL_SHOOT_BATCHES);
@@ -120,7 +134,7 @@ export default function App() {
   const [selectedInvoiceBooking, setSelectedInvoiceBooking] = useState<AppointmentRecord | null>(null);
   const [isAdminOpen, setIsAdminOpen] = useState<boolean>(false);
 
-  // Handlers for Accounts, Studio Profile and Crew
+  // Account Management
   const handleRegisterAccount = (newAccount: StoredAuthAccount, updatedShop?: StudioShopProfile) => {
     setAccounts(prev => [...prev, newAccount]);
     if (updatedShop) {
@@ -132,11 +146,107 @@ export default function App() {
     setShopProfile(updated);
   };
 
-  const handleAddEmployee = (newEmp: EmployeeRecord) => {
+  const handleAddEmployee = (newEmp: EmployeeRecord, tempPassword: string = 'employee123') => {
     setEmployees(prev => [newEmp, ...prev]);
+    const newAccount: StoredAuthAccount = {
+      id: Date.now(),
+      role: 'employee',
+      name: newEmp.name,
+      email: newEmp.email,
+      phone: newEmp.phone,
+      address: 'SnepStudio Branch, Mumbai',
+      passwordHash: tempPassword,
+      designation: newEmp.role,
+      employee_id: newEmp.id,
+      created_at: newEmp.joined_date
+    };
+    setAccounts(prev => [...prev, newAccount]);
   };
 
-  // Handlers
+  const handleAddService = (newService: StudioService) => {
+    setServices(prev => [newService, ...prev]);
+  };
+
+  const handleUpdateServicePrice = (serviceId: string, newNumericPrice: number) => {
+    setServices(prev =>
+      prev.map(s =>
+        s.id === serviceId
+          ? {
+              ...s,
+              numericPrice: newNumericPrice,
+              price: `Starting from ₹${newNumericPrice.toLocaleString()}`
+            }
+          : s
+      )
+    );
+  };
+
+  // Work & Booking Status Updaters
+  const handleUpdateBookingStatus = (id: number, status: AppointmentRecord['status']) => {
+    setBookings(prev => prev.map(b => (b.id === id ? { ...b, status } : b)));
+  };
+
+  const handleUpdateWorkStatus = (id: number, status: WorkRecord['status'], completedFilename?: string) => {
+    setWorkItems(prev =>
+      prev.map(w => (w.id === id ? { ...w, status, completed_filename: completedFilename || w.completed_filename } : w))
+    );
+  };
+
+  // Work & Appointment Employee Assignment Handlers
+  const handleAssignEmployeeToAppointment = (bookingId: number, employeeId: string, employeeName: string) => {
+    setBookings(prev =>
+      prev.map(b =>
+        b.id === bookingId
+          ? { ...b, assigned_employee_id: employeeId, assigned_employee_name: employeeName }
+          : b
+      )
+    );
+  };
+
+  const handleAssignEmployeeToWork = (workId: number, employeeId: string, employeeName: string) => {
+    setWorkItems(prev =>
+      prev.map(w =>
+        w.id === workId
+          ? { ...w, assigned_employee_id: employeeId, assigned_employee_name: employeeName }
+          : w
+      )
+    );
+  };
+
+  // Deliverables & Proofing
+  const handleUploadCompletedDeliverable = (deliverable: {
+    customer_name: string;
+    user_id: number;
+    appointment_id?: number;
+    service: string;
+    filename: string;
+    file_type: 'Photo' | 'Video';
+    description: string;
+  }) => {
+    const newWork: WorkRecord = {
+      id: Date.now(),
+      user_id: deliverable.user_id || 101,
+      customer_name: deliverable.customer_name,
+      appointment_id: deliverable.appointment_id || 1001,
+      service: deliverable.service,
+      original_filename: deliverable.filename,
+      file_type: deliverable.file_type,
+      description: deliverable.description,
+      status: 'Completed',
+      completed_filename: deliverable.filename,
+      created_at: new Date().toISOString().split('T')[0]
+    };
+    setWorkItems(prev => [newWork, ...prev]);
+  };
+
+  const handleUpdateBatch = (updatedBatch: ShootBatchRecord) => {
+    setShootBatches(prev => prev.map(b => (b.id === updatedBatch.id ? updatedBatch : b)));
+  };
+
+  const handleSendNewBatch = (newBatch: ShootBatchRecord) => {
+    setShootBatches(prev => [newBatch, ...prev]);
+  };
+
   const handleOpenBookingModal = (service?: string) => {
     if (service) {
       setPreselectedService(service);
@@ -172,7 +282,6 @@ export default function App() {
 
     setBookings(prev => [newBooking, ...prev]);
 
-    // If user is logged in, optionally navigate to My Bookings
     if (currentUser) {
       setActivePage('my-bookings');
     }
@@ -200,24 +309,6 @@ export default function App() {
     );
   };
 
-  const handleUpdateBookingStatus = (id: number, status: AppointmentRecord['status']) => {
-    setBookings(prev => prev.map(b => (b.id === id ? { ...b, status } : b)));
-  };
-
-  const handleUpdateWorkStatus = (id: number, status: WorkRecord['status'], completedFilename?: string) => {
-    setWorkItems(prev =>
-      prev.map(w => (w.id === id ? { ...w, status, completed_filename: completedFilename || w.completed_filename } : w))
-    );
-  };
-
-  const handleUpdateBatch = (updatedBatch: ShootBatchRecord) => {
-    setShootBatches(prev => prev.map(b => (b.id === updatedBatch.id ? updatedBatch : b)));
-  };
-
-  const handleSendNewBatch = (newBatch: ShootBatchRecord) => {
-    setShootBatches(prev => [newBatch, ...prev]);
-  };
-
   const handleUpdateProfile = (updated: Partial<UserRecord>) => {
     if (currentUser) {
       setCurrentUser({ ...currentUser, ...updated });
@@ -226,8 +317,77 @@ export default function App() {
 
   const handleLogout = () => {
     setCurrentUser(null);
+    setIsAdminOpen(false);
     setActivePage('home');
   };
+
+  const handleLoginSuccess = (user: UserRecord, updatedAccounts?: StoredAuthAccount[]) => {
+    setCurrentUser(user);
+    if (updatedAccounts) {
+      setAccounts(updatedAccounts);
+    }
+    if (user.role === 'admin') {
+      setActivePage('admin-dashboard');
+    } else if (user.role === 'employee') {
+      setActivePage('employee-dashboard');
+    } else {
+      setActivePage('dashboard');
+    }
+  };
+
+  // If active page is dedicated Employee Dashboard
+  if (activePage === 'employee-dashboard' && currentUser && currentUser.role === 'employee') {
+    return (
+      <EmployeeDashboard
+        employee={currentUser}
+        bookings={bookings}
+        shootBatches={shootBatches}
+        workItems={workItems}
+        onSendNewBatch={handleSendNewBatch}
+        onUpdateWorkStatus={handleUpdateWorkStatus}
+        onUpdateBookingStatus={handleUpdateBookingStatus}
+        onUploadCompletedDeliverable={handleUploadCompletedDeliverable}
+        onLogout={handleLogout}
+      />
+    );
+  }
+
+  // If active page is dedicated Admin Dashboard
+  if (activePage === 'admin-dashboard' && currentUser && currentUser.role === 'admin') {
+    return (
+      <div className="min-h-screen bg-[#0b0d13] text-slate-100">
+        <Navbar
+          activePage={activePage}
+          setActivePage={setActivePage}
+          currentUser={currentUser}
+          shopName={shopProfile.shop_name}
+          onLogout={handleLogout}
+          onOpenBookingModal={handleOpenBookingModal}
+          onOpenAdmin={() => setIsAdminOpen(true)}
+        />
+        <AdminPortal
+          bookings={bookings}
+          workItems={workItems}
+          shootBatches={shootBatches}
+          shopProfile={shopProfile}
+          employees={employees}
+          accounts={accounts}
+          services={services}
+          onUpdateBookingStatus={handleUpdateBookingStatus}
+          onUpdateWorkStatus={handleUpdateWorkStatus}
+          onAssignEmployeeToAppointment={handleAssignEmployeeToAppointment}
+          onAssignEmployeeToWork={handleAssignEmployeeToWork}
+          onAddEmployee={handleAddEmployee}
+          onUpdateShopProfile={handleUpdateShopProfile}
+          onAddService={handleAddService}
+          onUpdateServicePrice={handleUpdateServicePrice}
+          onViewInvoice={(booking) => setSelectedInvoiceBooking(booking)}
+          onClose={() => setActivePage('home')}
+          isFullPage={true}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#0b0d12] text-slate-100 flex flex-col font-sans selection:bg-amber-400 selection:text-slate-950">
@@ -250,6 +410,7 @@ export default function App() {
             onNavigate={setActivePage}
             onOpenBookingModal={handleOpenBookingModal}
             onOpenGalleryItem={() => setActivePage('gallery')}
+            shopProfile={shopProfile}
           />
         )}
 
@@ -321,15 +482,36 @@ export default function App() {
           />
         )}
 
-        {activePage === 'dashboard' && currentUser && (
-          <CustomerDashboard
-            currentUser={currentUser}
-            bookings={bookings.filter(b => b.user_id === currentUser.id)}
-            workItems={workItems.filter(w => w.user_id === currentUser.id)}
-            shootBatches={shootBatches.filter(b => b.customer_id === currentUser.id)}
-            onNavigate={setActivePage}
-            onOpenBookingModal={() => handleOpenBookingModal()}
-          />
+        {activePage === 'dashboard' && (
+          currentUser ? (
+            <CustomerDashboard
+              currentUser={currentUser}
+              bookings={bookings.filter(b => b.user_id === currentUser.id)}
+              workItems={workItems.filter(w => w.user_id === currentUser.id)}
+              shootBatches={shootBatches.filter(b => b.customer_id === currentUser.id)}
+              onNavigate={setActivePage}
+              onOpenBookingModal={() => handleOpenBookingModal()}
+            />
+          ) : (
+            <div className="max-w-xl mx-auto px-4 py-20 text-center space-y-4">
+              <h2 className="text-2xl font-bold text-white">Client Dashboard Access</h2>
+              <p className="text-slate-400 text-sm">Please log in to your customer account to view your scheduled bookings, work status, and downloads.</p>
+              <div className="flex items-center justify-center gap-3 pt-2">
+                <button
+                  onClick={() => setActivePage('login')}
+                  className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-6 py-2.5 rounded-xl text-xs uppercase tracking-wider cursor-pointer"
+                >
+                  Log In Now
+                </button>
+                <button
+                  onClick={() => setActivePage('register')}
+                  className="bg-white/10 hover:bg-white/15 text-white font-semibold px-6 py-2.5 rounded-xl text-xs cursor-pointer"
+                >
+                  Register Account
+                </button>
+              </div>
+            </div>
+          )
         )}
 
         {activePage === 'profile' && currentUser && (
@@ -341,19 +523,11 @@ export default function App() {
 
         {(activePage === 'login' || activePage === 'register') && (
           <AuthView
-            initialRole="customer"
-            initialMode={activePage === 'login' ? 'login' : 'register'}
+            initialMode={activePage === 'register' ? 'register' : 'login'}
             accounts={accounts}
             shopProfile={shopProfile}
             onRegisterAccount={handleRegisterAccount}
-            onLoginSuccess={(user, updatedAccounts) => {
-              setCurrentUser(user);
-              setAccounts(updatedAccounts);
-              if (user.role === 'admin' || user.role === 'employee') {
-                setIsAdminOpen(true);
-              }
-              setActivePage('home');
-            }}
+            onLoginSuccess={handleLoginSuccess}
             onNavigate={setActivePage}
           />
         )}
@@ -374,7 +548,7 @@ export default function App() {
         onClose={() => setSelectedInvoiceBooking(null)}
       />
 
-      {/* Discreet Studio Staff Admin Portal */}
+      {/* Discreet Studio Staff Admin Portal Modal */}
       {isAdminOpen && (
         <AdminPortal
           bookings={bookings}
@@ -382,11 +556,17 @@ export default function App() {
           shootBatches={shootBatches}
           shopProfile={shopProfile}
           employees={employees}
+          accounts={accounts}
+          services={services}
           onUpdateBookingStatus={handleUpdateBookingStatus}
           onUpdateWorkStatus={handleUpdateWorkStatus}
-          onSendNewBatch={handleSendNewBatch}
-          onUpdateShopProfile={handleUpdateShopProfile}
+          onAssignEmployeeToAppointment={handleAssignEmployeeToAppointment}
+          onAssignEmployeeToWork={handleAssignEmployeeToWork}
           onAddEmployee={handleAddEmployee}
+          onUpdateShopProfile={handleUpdateShopProfile}
+          onAddService={handleAddService}
+          onUpdateServicePrice={handleUpdateServicePrice}
+          onViewInvoice={(booking) => setSelectedInvoiceBooking(booking)}
           onClose={() => setIsAdminOpen(false)}
         />
       )}

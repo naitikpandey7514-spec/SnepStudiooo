@@ -171,19 +171,23 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenAdmin, shopPro
                 <span>
                   {shopProfile 
                     ? `${shopProfile.street_address}, ${shopProfile.landmark}, ${shopProfile.city}, ${shopProfile.state} - ${shopProfile.pincode}`
-                    : 'Plot 42, Creative Arts Enclave, Off Linking Road, Bandra West, Mumbai - 400050'}
+                    : 'Plot 42, Floor 2, Creative Arts Enclave, Off Linking Road, Near Starbucks & Mehboob Studios, Bandra West, Mumbai, Maharashtra - 400050'}
                 </span>
               </div>
               <div className="flex items-center gap-2.5">
                 <Phone className="w-4 h-4 text-amber-400 shrink-0" />
-                <span>{shopProfile?.phone_primary || '+91 98765 43210'}</span>
+                <a href={`tel:${shopProfile?.phone_primary || '+919876543210'}`} className="hover:text-amber-400 transition-colors">
+                  {shopProfile?.phone_primary || '+91 98765 43210'}
+                </a>
               </div>
               <div className="flex items-center gap-2.5">
                 <Mail className="w-4 h-4 text-amber-400 shrink-0" />
-                <span>{shopProfile?.email || 'contact@snepstudio.com'}</span>
+                <a href={`mailto:${shopProfile?.email || 'contact@snepstudio.com'}`} className="hover:text-amber-400 transition-colors">
+                  {shopProfile?.email || 'contact@snepstudio.com'}
+                </a>
               </div>
               <div className="text-[11px] text-slate-500 pt-1">
-                {shopProfile?.operating_hours || 'Open Daily: 9:00 AM – 9:00 PM'}
+                {shopProfile?.operating_hours || 'Monday – Sunday: 09:00 AM – 09:00 PM (Shoot crews 24/7 on request)'}
               </div>
             </div>
           </div>

@@ -44,7 +44,7 @@ export const INITIAL_STUDIO_SHOP: StudioShopProfile = {
 
 export const INITIAL_STUDIO_EMPLOYEES: EmployeeRecord[] = [
   {
-    id: 'EMP-01',
+    id: 'EMP-0001',
     name: 'Arjun Mehta',
     email: 'arjun.mehta@snepstudio.com',
     phone: '+91 98201 11223',
@@ -54,7 +54,7 @@ export const INITIAL_STUDIO_EMPLOYEES: EmployeeRecord[] = [
     shoots_completed: 142
   },
   {
-    id: 'EMP-02',
+    id: 'EMP-0002',
     name: 'Kavita Iyer',
     email: 'kavita.iyer@snepstudio.com',
     phone: '+91 98202 33445',
@@ -64,7 +64,7 @@ export const INITIAL_STUDIO_EMPLOYEES: EmployeeRecord[] = [
     shoots_completed: 98
   },
   {
-    id: 'EMP-03',
+    id: 'EMP-0003',
     name: 'Rahul Deshmukh',
     email: 'rahul.deshmukh@snepstudio.com',
     phone: '+91 98203 55667',
@@ -74,7 +74,7 @@ export const INITIAL_STUDIO_EMPLOYEES: EmployeeRecord[] = [
     shoots_completed: 64
   },
   {
-    id: 'EMP-04',
+    id: 'EMP-0004',
     name: 'Pooja Nair',
     email: 'pooja.nair@snepstudio.com',
     phone: '+91 98204 77889',
@@ -84,7 +84,7 @@ export const INITIAL_STUDIO_EMPLOYEES: EmployeeRecord[] = [
     shoots_completed: 215
   },
   {
-    id: 'EMP-05',
+    id: 'EMP-0005',
     name: 'Sameer Khan',
     email: 'sameer.khan@snepstudio.com',
     phone: '+91 98205 99001',
@@ -106,7 +106,6 @@ export interface StoredAuthAccount {
   designation?: string;
   employee_id?: string;
   shop_name?: string;
-  has_logged_in?: boolean;
   created_at: string;
 }
 
@@ -119,7 +118,6 @@ export const PRESEEDED_ACCOUNTS: StoredAuthAccount[] = [
     phone: '+91 98765 43210',
     address: 'Silver Sands, Juhu Beach Road, Mumbai, Maharashtra 400049',
     passwordHash: 'password123',
-    has_logged_in: false,
     created_at: '2026-02-15'
   },
   {
@@ -132,7 +130,6 @@ export const PRESEEDED_ACCOUNTS: StoredAuthAccount[] = [
     passwordHash: 'admin123',
     designation: 'Studio Owner & Executive Producer',
     shop_name: 'SnepStudio Photography & Films',
-    has_logged_in: false,
     created_at: '2025-01-01'
   },
   {
@@ -144,8 +141,7 @@ export const PRESEEDED_ACCOUNTS: StoredAuthAccount[] = [
     address: 'Andheri West, Mumbai, Maharashtra',
     passwordHash: 'employee123',
     designation: 'Lead Photographer',
-    employee_id: 'EMP-01',
-    has_logged_in: false,
+    employee_id: 'EMP-0001',
     created_at: '2023-01-15'
   }
 ];

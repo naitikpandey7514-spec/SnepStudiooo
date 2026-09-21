@@ -37,8 +37,13 @@ GST (18%): ₹${gst.toLocaleString()}
 Total Amount: ₹${total.toLocaleString()}
 Payment Status: ${booking.payment_status.toUpperCase()} (${booking.payment_method || 'UPI/Online'})
 ======================================
-SnepStudio - Capture. Create. Cherish.
-hello@snepstudio.com | +91 98765 43210
+SnepStudio Photography & Films
+Plot 42, Floor 2, Creative Arts Enclave, Off Linking Road
+Near Starbucks & Mehboob Studios, Bandra West, Mumbai, Maharashtra - 400050
+Phone: +91 98765 43210 | Email: contact@snepstudio.com
+Operating Hours: Monday – Sunday: 09:00 AM – 09:00 PM (Shoot crews 24/7 on request)
+GSTIN: 27AABCU9603R1ZM | Reg: MAH/MUM/EST/2021/84920
+======================================
     `;
     const blob = new Blob([invoiceContent], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -106,9 +111,11 @@ hello@snepstudio.com | +91 98765 43210
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
                 Studio Office:
               </span>
-              <h4 className="text-sm font-bold text-white">SnepStudio Media Labs</h4>
-              <p className="text-slate-400 mt-0.5">Film City Road, Pune &middot; Mumbai</p>
-              <p className="text-slate-400 mt-0.5">GSTIN: 27AABCS1429B1Z8</p>
+              <h4 className="text-sm font-bold text-white">SnepStudio Photography &amp; Films</h4>
+              <p className="text-slate-400 mt-0.5">Plot 42, Floor 2, Creative Arts Enclave, Off Linking Road</p>
+              <p className="text-slate-400 mt-0.5">Near Starbucks &amp; Mehboob Studios, Bandra West, Mumbai - 400050</p>
+              <p className="text-slate-400 mt-0.5">Ph: +91 98765 43210 &bull; contact@snepstudio.com</p>
+              <p className="text-slate-400 mt-0.5 font-mono text-[11px]">GSTIN: 27AABCU9603R1ZM</p>
             </div>
           </div>
 

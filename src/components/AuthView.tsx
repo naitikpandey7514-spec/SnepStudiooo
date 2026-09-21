@@ -1,800 +1,732 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  Building2, Camera, User, Briefcase, Mail, Lock, Phone, MapPin, 
-  CheckCircle2, AlertCircle, ArrowRight, ShieldCheck, Sparkles,
-  Info, Clock, Award
+  Camera, User, Briefcase, Shield, Mail, Lock, Phone, MapPin, 
+  CheckCircle2, AlertCircle, ArrowRight, Eye, EyeOff, Sparkles, UserPlus, LogIn
 } from 'lucide-react';
 import { UserRecord, StudioShopProfile } from '../types';
 import { StoredAuthAccount } from '../data/studioData';
 
-interface AuthModalOrViewProps {
-  initialRole?: 'customer' | 'admin' | 'employee';
-  initialMode?: 'register' | 'login';
+interface AuthViewProps {
+  initialMode?: 'login' | 'register';
+  initialRole?: 'customer' | 'employee' | 'admin';
   accounts: StoredAuthAccount[];
-  shopProfile: StudioShopProfile;
+  shopProfile?: StudioShopProfile;
   onRegisterAccount: (newAccount: StoredAuthAccount, updatedShop?: StudioShopProfile) => void;
-  onLoginSuccess: (user: UserRecord, updatedAccounts: StoredAuthAccount[]) => void;
+  onLoginSuccess: (user: UserRecord, updatedAccounts?: StoredAuthAccount[]) => void;
   onNavigate: (page: string) => void;
 }
 
-export const AuthView: React.FC<AuthModalOrViewProps> = ({
+export const AuthView: React.FC<AuthViewProps> = ({
+  initialMode = 'login',
   initialRole = 'customer',
-  initialMode = 'register',
   accounts,
   shopProfile,
   onRegisterAccount,
   onLoginSuccess,
   onNavigate
 }) => {
-  // Navigation tabs
-  const [activeRole, setActiveRole] = useState<'customer' | 'admin' | 'employee'>(initialRole);
-  const [mode, setMode] = useState<'register' | 'login'>(initialMode);
+  const [mode, setMode] = useState<'login' | 'register'>(initialMode);
+  
+  // Registration role: strictly Customer or Employee (Admin cannot be registered)
+  const [regRole, setRegRole] = useState<'customer' | 'employee'>('customer');
 
-  // Common credentials
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [fullName, setFullName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [address, setAddress] = useState('');
+  // Login role: Customer, Employee, or Admin
+  const [loginRole, setLoginRole] = useState<'customer' | 'employee' | 'admin'>(
+    initialRole === 'admin' ? 'admin' : initialRole === 'employee' ? 'employee' : 'customer'
+  );
 
-  // Admin Shop Specific Details
-  const [shopName, setShopName] = useState(shopProfile.shop_name);
-  const [tagline, setTagline] = useState(shopProfile.tagline);
-  const [shopRegNumber, setShopRegNumber] = useState(shopProfile.shop_reg_number);
-  const [gstTin, setGstTin] = useState(shopProfile.gst_tin);
-  const [streetAddress, setStreetAddress] = useState(shopProfile.street_address);
-  const [landmark, setLandmark] = useState(shopProfile.landmark);
-  const [city, setCity] = useState(shopProfile.city);
-  const [state, setState] = useState(shopProfile.state);
-  const [pincode, setPincode] = useState(shopProfile.pincode);
-  const [operatingHours, setOperatingHours] = useState(shopProfile.operating_hours);
-  const [upiId, setUpiId] = useState(shopProfile.upi_id);
-  const [bankAccountNo, setBankAccountNo] = useState(shopProfile.bank_account_no);
-  const [bankIfsc, setBankIfsc] = useState(shopProfile.bank_ifsc);
+  // Sync mode with props when changed from navbar
+  useEffect(() => {
+    setMode(initialMode);
+  }, [initialMode]);
 
-  // Employee specific details
-  const [employeeId, setEmployeeId] = useState('EMP-' + Math.floor(Math.random() * 90 + 10));
-  const [employeeRole, setEmployeeRole] = useState<'Lead Photographer' | 'Drone Pilot' | 'Cinematographer' | 'Senior Colorist / Video Editor' | 'Studio Assistant'>('Lead Photographer');
+  useEffect(() => {
+    if (initialRole) {
+      if (initialRole === 'admin') setLoginRole('admin');
+      else if (initialRole === 'employee') {
+        setLoginRole('employee');
+        setRegRole('employee');
+      } else {
+        setLoginRole('customer');
+        setRegRole('customer');
+      }
+    }
+  }, [initialRole]);
 
-  // Feedback states
-  const [error, setError] = useState<string | null>(null);
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  // Common Registration Fields
+  const [regFullName, setRegFullName] = useState('');
+  const [regEmail, setRegEmail] = useState('');
+  const [regPhone, setRegPhone] = useState('');
+  const [regAddress, setRegAddress] = useState('');
+  const [regPassword, setRegPassword] = useState('');
+  const [regConfirmPassword, setRegConfirmPassword] = useState('');
+  
+  // Employee-only Registration Field
+  const [regDesignation, setRegDesignation] = useState<string>('Lead Photographer');
 
-  // Handle Register
+  // Login Fields
+  const [loginIdentifier, setLoginIdentifier] = useState(''); // Email or Employee ID
+  const [loginPassword, setLoginPassword] = useState('');
+
+  // UI state
+  const [showPassword, setShowPassword] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  const resetMessages = () => {
+    setErrorMessage(null);
+    setSuccessMessage(null);
+  };
+
+  // Demo Credentials Quick Fill
+  const fillDemoCredentials = (role: 'customer' | 'employee' | 'admin') => {
+    resetMessages();
+    setMode('login');
+    setLoginRole(role);
+    if (role === 'customer') {
+      setLoginIdentifier('rohan.sharma@example.com');
+      setLoginPassword('password123');
+    } else if (role === 'employee') {
+      setLoginIdentifier('EMP-0001');
+      setLoginPassword('employee123');
+    } else if (role === 'admin') {
+      setLoginIdentifier('admin@snepstudio.com');
+      setLoginPassword('admin123');
+    }
+  };
+
+  // -------------------------------------------------------------
+  // REGISTRATION HANDLER
+  // -------------------------------------------------------------
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
+    resetMessages();
 
-    const cleanEmail = email.trim().toLowerCase();
-    if (!cleanEmail || !password) {
-      setError('Please provide a valid email and password.');
+    const cleanEmail = regEmail.trim().toLowerCase();
+    const cleanName = regFullName.trim();
+    const cleanPhone = regPhone.trim();
+    const cleanAddress = regAddress.trim();
+
+    if (!cleanName || !cleanEmail || !cleanPhone || !cleanAddress || !regPassword) {
+      setErrorMessage('Please fill in all required registration fields.');
       return;
     }
 
-    // Check if account already exists with this email
+    // Unique email enforcement
     const existing = accounts.find(a => a.email.toLowerCase() === cleanEmail);
     if (existing) {
-      setError(`An account with email "${cleanEmail}" already exists. Only one account can be registered with each email address.`);
+      setErrorMessage(`The email "${cleanEmail}" is already registered. Please login instead.`);
       return;
     }
 
-    if (password.length < 5) {
-      setError('Password must contain at least 5 characters for studio security.');
+    if (regPassword.length < 5) {
+      setErrorMessage('Password must be at least 5 characters long.');
       return;
     }
 
-    if (password !== confirmPassword) {
-      setError('Passwords do not match. Please verify your password entry.');
+    if (regPassword !== regConfirmPassword) {
+      setErrorMessage('Passwords do not match. Please verify your password entry.');
       return;
     }
 
-    // Build new account
-    const newId = Date.now();
+    // Generate unique employee ID if employee
+    const nextEmpNum = accounts.filter(a => a.role === 'employee').length + 1;
+    const generatedEmployeeId = regRole === 'employee' ? `EMP-${String(nextEmpNum).padStart(4, '0')}` : undefined;
+
     const newAccount: StoredAuthAccount = {
-      id: newId,
-      role: activeRole,
-      name: fullName.trim() || (activeRole === 'admin' ? 'Studio Administrator' : activeRole === 'employee' ? 'Staff Member' : 'Studio Client'),
+      id: Date.now(),
+      role: regRole,
+      name: cleanName,
       email: cleanEmail,
-      phone: phone.trim() || '+91 98765 43210',
-      address: activeRole === 'admin' ? `${streetAddress}, ${landmark}, ${city}, ${state} - ${pincode}` : (address.trim() || `${city || 'Mumbai'}, India`),
-      passwordHash: password,
-      designation: activeRole === 'employee' ? employeeRole : activeRole === 'admin' ? 'Studio Owner & Admin' : 'Client',
-      employee_id: activeRole === 'employee' ? employeeId : undefined,
-      shop_name: activeRole === 'admin' ? shopName : undefined,
-      has_logged_in: false,
+      phone: cleanPhone,
+      address: cleanAddress,
+      passwordHash: regPassword,
+      designation: regRole === 'employee' ? regDesignation : 'Customer',
+      employee_id: generatedEmployeeId,
       created_at: new Date().toISOString().split('T')[0]
     };
 
-    let updatedShop: StudioShopProfile | undefined = undefined;
-    if (activeRole === 'admin') {
-      updatedShop = {
-        ...shopProfile,
-        shop_name: shopName.trim() || shopProfile.shop_name,
-        tagline: tagline.trim() || shopProfile.tagline,
-        owner_name: fullName.trim() || shopProfile.owner_name,
-        shop_reg_number: shopRegNumber.trim() || shopProfile.shop_reg_number,
-        gst_tin: gstTin.trim() || shopProfile.gst_tin,
-        email: cleanEmail,
-        phone_primary: phone.trim() || shopProfile.phone_primary,
-        street_address: streetAddress.trim() || shopProfile.street_address,
-        landmark: landmark.trim() || shopProfile.landmark,
-        city: city.trim() || shopProfile.city,
-        state: state.trim() || shopProfile.state,
-        pincode: pincode.trim() || shopProfile.pincode,
-        operating_hours: operatingHours.trim() || shopProfile.operating_hours,
-        upi_id: upiId.trim() || shopProfile.upi_id,
-        bank_account_no: bankAccountNo.trim() || shopProfile.bank_account_no,
-        bank_ifsc: bankIfsc.trim() || shopProfile.bank_ifsc
-      };
+    onRegisterAccount(newAccount);
+
+    if (regRole === 'employee') {
+      setSuccessMessage(`Employee account registered successfully! Your Employee ID is ${generatedEmployeeId}. Logging you in...`);
+    } else {
+      setSuccessMessage('Registration successful! Welcome to SnepStudio. Logging you in...');
     }
 
-    onRegisterAccount(newAccount, updatedShop);
-    setSuccessMsg(`Registration successful! Your ${activeRole.toUpperCase()} account is ready. Proceeding to one-time sign-in...`);
-    
-    // Auto switch to login or automatically log in
+    // Automatically log in after registration
     setTimeout(() => {
-      // Mark as logged in (one-time login rule)
       const userRecord: UserRecord = {
         id: newAccount.id,
         name: newAccount.name,
         email: newAccount.email,
         phone: newAccount.phone,
         address: newAccount.address,
-        created_at: newAccount.created_at,
         role: newAccount.role,
+        employee_id: newAccount.employee_id,
         designation: newAccount.designation,
-        has_logged_in: true,
+        created_at: newAccount.created_at,
+        last_login_at: new Date().toISOString()
+      };
+      onLoginSuccess(userRecord);
+      if (userRecord.role === 'employee') {
+        onNavigate('employee-dashboard');
+      } else {
+        onNavigate('dashboard');
+      }
+    }, 1000);
+  };
+
+  // -------------------------------------------------------------
+  // LOGIN HANDLER
+  // -------------------------------------------------------------
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    resetMessages();
+
+    const cleanInput = loginIdentifier.trim();
+    if (!cleanInput || !loginPassword) {
+      setErrorMessage('Please enter both your login credential and password.');
+      return;
+    }
+
+    let targetAccount: StoredAuthAccount | undefined;
+
+    if (loginRole === 'customer') {
+      // Customer logs in with email
+      targetAccount = accounts.find(
+        a => a.role === 'customer' && a.email.toLowerCase() === cleanInput.toLowerCase()
+      );
+      if (!targetAccount) {
+        setErrorMessage(`No customer account found with email "${cleanInput}". Please check your email or Register.`);
+        return;
+      }
+    } else if (loginRole === 'employee') {
+      // Employee logs in with Employee ID or email
+      targetAccount = accounts.find(
+        a => a.role === 'employee' && (
+          a.employee_id?.toUpperCase() === cleanInput.toUpperCase() ||
+          a.email.toLowerCase() === cleanInput.toLowerCase()
+        )
+      );
+      if (!targetAccount) {
+        setErrorMessage(`No staff account found with ID or email "${cleanInput}". Please register as an employee or check your ID.`);
+        return;
+      }
+    } else if (loginRole === 'admin') {
+      // Admin logs in with username 'admin' or email
+      targetAccount = accounts.find(
+        a => a.role === 'admin' && (
+          a.email.toLowerCase() === cleanInput.toLowerCase() ||
+          cleanInput.toLowerCase() === 'admin'
+        )
+      );
+      if (!targetAccount) {
+        setErrorMessage('Authorized Admin account not found.');
+        return;
+      }
+    }
+
+    if (targetAccount && targetAccount.passwordHash !== loginPassword) {
+      setErrorMessage('Incorrect password. Please try again.');
+      return;
+    }
+
+    if (targetAccount) {
+      const userRecord: UserRecord = {
+        id: targetAccount.id,
+        name: targetAccount.name,
+        email: targetAccount.email,
+        phone: targetAccount.phone,
+        address: targetAccount.address,
+        role: targetAccount.role,
+        employee_id: targetAccount.employee_id,
+        designation: targetAccount.designation,
+        created_at: targetAccount.created_at,
         last_login_at: new Date().toISOString()
       };
 
-      const updatedAccounts = accounts.concat(newAccount).map(acc => 
-        acc.email.toLowerCase() === cleanEmail ? { ...acc, has_logged_in: true } : acc
-      );
-
-      onLoginSuccess(userRecord, updatedAccounts);
-      onNavigate(activeRole === 'customer' ? 'home' : activeRole === 'admin' ? 'home' : 'my-work');
-    }, 1200);
-  };
-
-  // Handle Login with One-Time Login Rule
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-
-    const cleanEmail = email.trim().toLowerCase();
-    if (!cleanEmail || !password) {
-      setError('Please provide your registered email address and password.');
-      return;
-    }
-
-    // Locate account in database
-    const targetAccount = accounts.find(a => a.email.toLowerCase() === cleanEmail);
-
-    if (!targetAccount) {
-      setError(`No account found for "${cleanEmail}". Please register first using the Register tab.`);
-      return;
-    }
-
-    // Check role match
-    if (targetAccount.role !== activeRole) {
-      setError(`This email is registered as "${targetAccount.role.toUpperCase()}". Please switch to the ${targetAccount.role.toUpperCase()} tab to sign in.`);
-      return;
-    }
-
-    // Validate password
-    if (targetAccount.passwordHash !== password) {
-      setError('Incorrect password. Please verify and try again.');
-      return;
-    }
-
-    // ONE TIME CAN LOGIN WITH THE EMAIL RULE CHECK:
-    // If the account has already logged in previously, enforce the single-session / one-time login constraint
-    if (targetAccount.has_logged_in) {
-      setError(`NOTICE: Security Policy: This email (${cleanEmail}) has already completed its single-activation login. To switch devices or re-authenticate, please reset via Studio Admin or use a fresh email.`);
-      return;
-    }
-
-    // Successfully verified -> mark as logged in
-    const updatedAccounts = accounts.map(a => 
-      a.email.toLowerCase() === cleanEmail ? { ...a, has_logged_in: true } : a
-    );
-
-    const userRecord: UserRecord = {
-      id: targetAccount.id,
-      name: targetAccount.name,
-      email: targetAccount.email,
-      phone: targetAccount.phone,
-      address: targetAccount.address,
-      created_at: targetAccount.created_at,
-      role: targetAccount.role,
-      designation: targetAccount.designation,
-      has_logged_in: true,
-      last_login_at: new Date().toISOString()
-    };
-
-    setSuccessMsg(`Welcome, ${targetAccount.name}! Login verified.`);
-    setTimeout(() => {
-      onLoginSuccess(userRecord, updatedAccounts);
-      onNavigate(activeRole === 'customer' ? 'home' : 'home');
-    }, 800);
-  };
-
-  // Quick switch demo fillers
-  const handleDemoFill = (role: 'customer' | 'admin' | 'employee') => {
-    setActiveRole(role);
-    setMode('login');
-    setError(null);
-    if (role === 'customer') {
-      setEmail('rohan.sharma@example.com');
-      setPassword('password123');
-    } else if (role === 'admin') {
-      setEmail('admin@snepstudio.com');
-      setPassword('admin123');
-    } else {
-      setEmail('arjun.mehta@snepstudio.com');
-      setPassword('employee123');
+      setSuccessMessage(`Welcome back, ${userRecord.name}!`);
+      setTimeout(() => {
+        onLoginSuccess(userRecord);
+        if (userRecord.role === 'admin') {
+          onNavigate('admin-dashboard');
+        } else if (userRecord.role === 'employee') {
+          onNavigate('employee-dashboard');
+        } else {
+          onNavigate('dashboard');
+        }
+      }, 500);
     }
   };
 
   return (
-    <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 relative flex items-center justify-center">
-      {/* Background ambient texture */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center opacity-10 pointer-events-none"
-        style={{
-          backgroundImage: `url('https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1920&q=80')`
-        }}
-      />
-
-      <div className="relative max-w-2xl w-full bg-[#12151e] border border-white/10 rounded-3xl p-6 sm:p-10 shadow-2xl">
-        
-        {/* Studio Branding */}
-        <div className="text-center mb-6">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-slate-950 mx-auto mb-3 shadow-lg shadow-amber-400/20">
-            <Camera className="w-7 h-7 text-slate-950 stroke-[2.2]" />
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-            {shopProfile.shop_name || 'SnepStudio Photography & Films'}
-          </h1>
-          <p className="text-xs text-amber-400 font-medium tracking-wide mt-1">
-            Studio Portal &bull; Customer &bull; Admin &bull; Employee Gateway
-          </p>
+    <div className="min-h-[85vh] py-12 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto flex flex-col justify-center">
+      
+      {/* Top Brand Header */}
+      <div className="text-center mb-8">
+        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 shadow-xl shadow-amber-500/20 mb-4">
+          <Camera className="w-7 h-7 stroke-[2.2]" />
         </div>
-
-        {/* 3 Role Selection Tabs */}
-        <div className="grid grid-cols-3 gap-2 p-1.5 rounded-2xl bg-[#171b26] border border-white/10 mb-6">
-          <button
-            type="button"
-            onClick={() => { setActiveRole('customer'); setError(null); }}
-            className={`py-3 px-2 rounded-xl text-xs sm:text-sm font-bold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-all cursor-pointer ${
-              activeRole === 'customer'
-                ? 'bg-amber-400 text-slate-950 shadow-md shadow-amber-400/20'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <User className="w-4 h-4" />
-            <span>Customer Portal</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => { setActiveRole('admin'); setError(null); }}
-            className={`py-3 px-2 rounded-xl text-xs sm:text-sm font-bold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-all cursor-pointer ${
-              activeRole === 'admin'
-                ? 'bg-amber-400 text-slate-950 shadow-md shadow-amber-400/20'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <Building2 className="w-4 h-4" />
-            <span>Admin / Shop Owner</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => { setActiveRole('employee'); setError(null); }}
-            className={`py-3 px-2 rounded-xl text-xs sm:text-sm font-bold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-all cursor-pointer ${
-              activeRole === 'employee'
-                ? 'bg-amber-400 text-slate-950 shadow-md shadow-amber-400/20'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <Briefcase className="w-4 h-4" />
-            <span>Employee / Crew</span>
-          </button>
-        </div>
-
-        {/* Mode Toggle: Register vs Login */}
-        <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-6">
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => { setMode('register'); setError(null); }}
-              className={`text-sm font-bold pb-2 transition-colors relative cursor-pointer ${
-                mode === 'register' ? 'text-amber-400' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              New Register ({activeRole.toUpperCase()})
-              {mode === 'register' && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-400 rounded-full" />
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={() => { setMode('login'); setError(null); }}
-              className={`text-sm font-bold pb-2 transition-colors relative cursor-pointer ${
-                mode === 'login' ? 'text-amber-400' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Sign In (Existing)
-              {mode === 'login' && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-400 rounded-full" />
-              )}
-            </button>
-          </div>
-
-          <div className="hidden sm:flex items-center gap-1 text-[11px] text-amber-300/80 bg-amber-400/10 px-2.5 py-1 rounded-full border border-amber-400/20">
-            <Info className="w-3 h-3 text-amber-400" />
-            <span>1-Email 1-Login Security Enabled</span>
-          </div>
-        </div>
-
-        {/* Error / Success Notifications */}
-        {error && (
-          <div className="mb-5 p-3.5 rounded-xl bg-red-500/15 border border-red-500/30 text-red-300 text-xs flex items-start gap-2.5">
-            <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
-            <span>{error}</span>
-          </div>
-        )}
-
-        {successMsg && (
-          <div className="mb-5 p-3.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2.5">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span>{successMsg}</span>
-          </div>
-        )}
-
-        {/* ======================================================== */}
-        {/* FORM: REGISTRATION (with complete shop details for admin) */}
-        {/* ======================================================== */}
-        {mode === 'register' ? (
-          <form onSubmit={handleRegister} className="space-y-4 text-xs">
-            
-            {/* Header info based on role */}
-            {activeRole === 'admin' && (
-              <div className="p-4 rounded-2xl bg-amber-400/5 border border-amber-400/20 mb-2">
-                <div className="flex items-center gap-2 text-amber-400 font-bold text-sm mb-1">
-                  <Building2 className="w-4 h-4" />
-                  <span>Studio Owner &amp; Shop Registration</span>
-                </div>
-                <p className="text-slate-300 text-xs leading-relaxed">
-                  As the studio owner, register your shop profile including registered business address, GSTIN, shop establishment license, operating hours, and billing credentials. These details auto-populate all client invoices and booking contracts.
-                </p>
-              </div>
-            )}
-
-            {activeRole === 'employee' && (
-              <div className="p-4 rounded-2xl bg-amber-400/5 border border-amber-400/20 mb-2">
-                <div className="flex items-center gap-2 text-amber-400 font-bold text-sm mb-1">
-                  <Briefcase className="w-4 h-4" />
-                  <span>Employee / Crew Registration</span>
-                </div>
-                <p className="text-slate-300 text-xs">
-                  Register as studio photographer, drone operator, cinematographer, or post-production colorist. You will be able to dispatch shoot folders directly to clients and manage work queues.
-                </p>
-              </div>
-            )}
-
-            {/* Basic Identity Details */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block uppercase font-bold text-slate-400 mb-1 text-[11px]">
-                  {activeRole === 'admin' ? 'Owner / Admin Full Name' : activeRole === 'employee' ? 'Staff Full Name' : 'Customer Full Name'} *
-                </label>
-                <div className="relative">
-                  <User className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-3.5" />
-                  <input
-                    type="text"
-                    required
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder={activeRole === 'admin' ? 'e.g. Vikramaditya Sengupta' : 'e.g. Rohan Sharma'}
-                    className="w-full bg-[#181c27] border border-white/15 rounded-xl pl-9 pr-3 py-2.5 text-white focus:outline-none focus:border-amber-400"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block uppercase font-bold text-slate-400 mb-1 text-[11px]">
-                  Email Address (One-time unique) *
-                </label>
-                <div className="relative">
-                  <Mail className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-3.5" />
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder={activeRole === 'admin' ? 'admin@snepstudio.com' : activeRole === 'employee' ? 'staff@snepstudio.com' : 'client@example.com'}
-                    className="w-full bg-[#181c27] border border-white/15 rounded-xl pl-9 pr-3 py-2.5 text-white focus:outline-none focus:border-amber-400"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block uppercase font-bold text-slate-400 mb-1 text-[11px]">
-                  Contact Phone Number *
-                </label>
-                <div className="relative">
-                  <Phone className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-3.5" />
-                  <input
-                    type="tel"
-                    required
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+91 98765 43210"
-                    className="w-full bg-[#181c27] border border-white/15 rounded-xl pl-9 pr-3 py-2.5 text-white focus:outline-none focus:border-amber-400"
-                  />
-                </div>
-              </div>
-
-              {activeRole === 'employee' ? (
-                <div>
-                  <label className="block uppercase font-bold text-slate-400 mb-1 text-[11px]">
-                    Designation / Specialization *
-                  </label>
-                  <select
-                    value={employeeRole}
-                    onChange={(e) => setEmployeeRole(e.target.value as any)}
-                    className="w-full bg-[#181c27] border border-white/15 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-amber-400"
-                  >
-                    <option value="Lead Photographer">Lead Photographer</option>
-                    <option value="Cinematographer">Cinematographer</option>
-                    <option value="Drone Pilot">Drone Pilot (Licensed)</option>
-                    <option value="Senior Colorist / Video Editor">Senior Colorist / Video Editor</option>
-                    <option value="Studio Assistant">Studio Assistant</option>
-                  </select>
-                </div>
-              ) : (
-                <div>
-                  <label className="block uppercase font-bold text-slate-400 mb-1 text-[11px]">
-                    {activeRole === 'admin' ? 'Designation / Role Title' : 'City / Neighborhood'}
-                  </label>
-                  <input
-                    type="text"
-                    value={activeRole === 'admin' ? 'Studio Owner & Executive Director' : address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    placeholder={activeRole === 'admin' ? 'Studio Owner' : 'Bandra West, Mumbai'}
-                    className="w-full bg-[#181c27] border border-white/15 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-amber-400"
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* ========================================= */}
-            {/* ADMIN EXCLUSIVE: FULL SHOP & ADDRESS FORM */}
-            {/* ========================================= */}
-            {activeRole === 'admin' && (
-              <div className="pt-3 border-t border-white/10 space-y-3">
-                <h3 className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <MapPin className="w-3.5 h-3.5" />
-                  <span>Shop &amp; Studio Commercial Details</span>
-                </h3>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block uppercase font-bold text-slate-400 mb-1 text-[11px]">
-                      Studio / Shop Name *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={shopName}
-                      onChange={(e) => setShopName(e.target.value)}
-                      placeholder="SnepStudio Photography & Films"
-                      className="w-full bg-[#181c27] border border-white/15 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-amber-400"
-                    />
-                  </div>
-                  <div>
-                    <label className="block uppercase font-bold text-slate-400 mb-1 text-[11px]">
-                      Studio Slogan / Tagline
-                    </label>
-                    <input
-                      type="text"
-                      value={tagline}
-                      onChange={(e) => setTagline(e.target.value)}
-                      placeholder="Preserving Moments in Cinematic Splendor"
-                      className="w-full bg-[#181c27] border border-white/15 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-amber-400"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block uppercase font-bold text-slate-400 mb-1 text-[11px]">
-                      Shop Establishment Reg. No.
-                    </label>
-                    <input
-                      type="text"
-                      value={shopRegNumber}
-                      onChange={(e) => setShopRegNumber(e.target.value)}
-                      placeholder="MAH/MUM/EST/2021/84920"
-                      className="w-full bg-[#181c27] border border-white/15 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-amber-400"
-                    />
-                  </div>
-                  <div>
-                    <label className="block uppercase font-bold text-slate-400 mb-1 text-[11px]">
-                      GSTIN / Tax ID
-                    </label>
-                    <input
-                      type="text"
-                      value={gstTin}
-                      onChange={(e) => setGstTin(e.target.value)}
-                      placeholder="27AABCU9603R1ZM"
-                      className="w-full bg-[#181c27] border border-white/15 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-amber-400"
-                    />
-                  </div>
-                </div>
-
-                {/* Complete Physical Address of the Shop */}
-                <div className="space-y-2">
-                  <div>
-                    <label className="block uppercase font-bold text-slate-400 mb-1 text-[11px]">
-                      Shop Street Address / Building / Floor *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={streetAddress}
-                      onChange={(e) => setStreetAddress(e.target.value)}
-                      placeholder="Plot 42, Floor 2, Creative Arts Enclave, Off Linking Road"
-                      className="w-full bg-[#181c27] border border-white/15 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-amber-400"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
-                    <div className="sm:col-span-2">
-                      <label className="block uppercase font-bold text-slate-400 mb-1 text-[11px]">
-                        Landmark / Area
-                      </label>
-                      <input
-                        type="text"
-                        value={landmark}
-                        onChange={(e) => setLandmark(e.target.value)}
-                        placeholder="Near Mehboob Studios, Bandra West"
-                        className="w-full bg-[#181c27] border border-white/15 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-amber-400"
-                      />
-                    </div>
-                    <div>
-                      <label className="block uppercase font-bold text-slate-400 mb-1 text-[11px]">
-                        City *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={city}
-                        onChange={(e) => setCity(e.target.value)}
-                        placeholder="Mumbai"
-                        className="w-full bg-[#181c27] border border-white/15 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-amber-400"
-                      />
-                    </div>
-                    <div>
-                      <label className="block uppercase font-bold text-slate-400 mb-1 text-[11px]">
-                        Pincode *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={pincode}
-                        onChange={(e) => setPincode(e.target.value)}
-                        placeholder="400050"
-                        className="w-full bg-[#181c27] border border-white/15 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-amber-400"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  <div>
-                    <label className="block uppercase font-bold text-slate-400 mb-1 text-[11px]">
-                      Operating Timings
-                    </label>
-                    <input
-                      type="text"
-                      value={operatingHours}
-                      onChange={(e) => setOperatingHours(e.target.value)}
-                      placeholder="Mon - Sun: 09:00 AM - 09:00 PM"
-                      className="w-full bg-[#181c27] border border-white/15 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-amber-400"
-                    />
-                  </div>
-                  <div>
-                    <label className="block uppercase font-bold text-slate-400 mb-1 text-[11px]">
-                      UPI ID for Invoices
-                    </label>
-                    <input
-                      type="text"
-                      value={upiId}
-                      onChange={(e) => setUpiId(e.target.value)}
-                      placeholder="snepstudio@hdfcbank"
-                      className="w-full bg-[#181c27] border border-white/15 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-amber-400"
-                    />
-                  </div>
-                  <div>
-                    <label className="block uppercase font-bold text-slate-400 mb-1 text-[11px]">
-                      Bank IFSC
-                    </label>
-                    <input
-                      type="text"
-                      value={bankIfsc}
-                      onChange={(e) => setBankIfsc(e.target.value)}
-                      placeholder="HDFC0000019"
-                      className="w-full bg-[#181c27] border border-white/15 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-amber-400"
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Customer Address Field */}
-            {activeRole === 'customer' && (
-              <div>
-                <label className="block uppercase font-bold text-slate-400 mb-1 text-[11px]">
-                  Residential Address / Location (For Shoot Travel) *
-                </label>
-                <div className="relative">
-                  <MapPin className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-3.5" />
-                  <input
-                    type="text"
-                    required
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    placeholder="e.g. Silver Sands, Juhu Beach Road, Mumbai, Maharashtra"
-                    className="w-full bg-[#181c27] border border-white/15 rounded-xl pl-9 pr-3 py-2.5 text-white focus:outline-none focus:border-amber-400"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Password Credentials */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-              <div>
-                <label className="block uppercase font-bold text-slate-400 mb-1 text-[11px]">
-                  Create Password *
-                </label>
-                <div className="relative">
-                  <Lock className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-3.5" />
-                  <input
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full bg-[#181c27] border border-white/15 rounded-xl pl-9 pr-3 py-2.5 text-white focus:outline-none focus:border-amber-400"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block uppercase font-bold text-slate-400 mb-1 text-[11px]">
-                  Confirm Password *
-                </label>
-                <div className="relative">
-                  <Lock className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-3.5" />
-                  <input
-                    type="password"
-                    required
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full bg-[#181c27] border border-white/15 rounded-xl pl-9 pr-3 py-2.5 text-white focus:outline-none focus:border-amber-400"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Submit Register Button */}
-            <button
-              type="submit"
-              className="w-full bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-bold py-3.5 rounded-xl text-xs uppercase tracking-wider transition-all shadow-md shadow-amber-500/20 cursor-pointer mt-4 flex items-center justify-center gap-2"
-            >
-              <ShieldCheck className="w-4 h-4 text-slate-950" />
-              <span>Register &amp; Activate {activeRole.toUpperCase()} Account</span>
-            </button>
-          </form>
-        ) : (
-          /* ======================================================== */
-          /* FORM: LOGIN (Enforces One-Time Login per Email Address)  */
-          /* ======================================================== */
-          <form onSubmit={handleLogin} className="space-y-4 text-xs">
-            <div className="p-3.5 rounded-2xl bg-amber-400/5 border border-amber-400/20 text-slate-300 mb-2">
-              <div className="flex items-center gap-2 text-amber-400 font-bold text-xs mb-1">
-                <Clock className="w-3.5 h-3.5" />
-                <span>One-Time Email Login Policy</span>
-              </div>
-              <p className="text-[11px] text-slate-400 leading-relaxed">
-                As per studio safety protocols, each registered email address operates with verified session binding. If you are registering for the first time, switch to the <strong>New Register</strong> tab.
-              </p>
-            </div>
-
-            <div>
-              <label className="block uppercase font-bold text-slate-400 mb-1 text-[11px]">
-                Registered Email Address *
-              </label>
-              <div className="relative">
-                <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-3.5" />
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder={activeRole === 'admin' ? 'admin@snepstudio.com' : activeRole === 'employee' ? 'arjun.mehta@snepstudio.com' : 'rohan.sharma@example.com'}
-                  className="w-full bg-[#181c27] border border-white/15 rounded-xl pl-9 pr-3 py-3 text-white focus:outline-none focus:border-amber-400"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block uppercase font-bold text-slate-400 mb-1 text-[11px]">
-                Password *
-              </label>
-              <div className="relative">
-                <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-3.5" />
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full bg-[#181c27] border border-white/15 rounded-xl pl-9 pr-3 py-3 text-white focus:outline-none focus:border-amber-400"
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              className="w-full bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-bold py-3.5 rounded-xl text-xs uppercase tracking-wider transition-all shadow-md shadow-amber-500/20 cursor-pointer mt-2"
-            >
-              Sign In to {activeRole.toUpperCase()} Portal
-            </button>
-
-            {/* Quick Demo Fill Buttons */}
-            <div className="pt-3 border-t border-white/10">
-              <span className="block text-[10px] uppercase font-bold text-slate-400 mb-2">
-                Quick Demo Accounts (Pre-configured):
-              </span>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleDemoFill('customer')}
-                  className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 text-[11px] text-left border border-white/10 transition-colors"
-                >
-                  <strong className="block text-amber-400 font-bold">Client Demo:</strong>
-                  <span className="truncate block text-slate-400">rohan.sharma@example.com</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleDemoFill('admin')}
-                  className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 text-[11px] text-left border border-white/10 transition-colors"
-                >
-                  <strong className="block text-amber-400 font-bold">Admin Demo:</strong>
-                  <span className="truncate block text-slate-400">admin@snepstudio.com</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleDemoFill('employee')}
-                  className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 text-[11px] text-left border border-white/10 transition-colors"
-                >
-                  <strong className="block text-amber-400 font-bold">Employee Demo:</strong>
-                  <span className="truncate block text-slate-400">arjun.mehta@snepstudio.com</span>
-                </button>
-              </div>
-            </div>
-          </form>
-        )}
-
+        <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
+          Snep<span className="text-amber-400">Studio</span>
+        </h1>
+        <p className="text-slate-400 text-sm mt-1">
+          Professional Photography &amp; Creative Editing Management Portal
+        </p>
       </div>
+
+      {/* Main Card */}
+      <div className="bg-[#121622] border border-white/10 rounded-3xl shadow-2xl overflow-hidden backdrop-blur-xl">
+        
+        {/* Navigation Mode Switcher (Login vs Register) */}
+        <div className="flex border-b border-white/10 bg-[#0d1019]">
+          <button
+            type="button"
+            onClick={() => { setMode('login'); resetMessages(); }}
+            className={`flex-1 py-4 text-center text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+              mode === 'login'
+                ? 'text-amber-400 border-b-2 border-amber-400 bg-white/5'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <LogIn className="w-4 h-4" />
+            <span>Login to Studio</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => { setMode('register'); resetMessages(); }}
+            className={`flex-1 py-4 text-center text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+              mode === 'register'
+                ? 'text-amber-400 border-b-2 border-amber-400 bg-white/5'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <UserPlus className="w-4 h-4" />
+            <span>Create Account</span>
+          </button>
+        </div>
+
+        <div className="p-6 sm:p-10">
+          
+          {/* ============================================================== */}
+          {/* 1. REGISTRATION VIEW                                           */}
+          {/* ============================================================== */}
+          {mode === 'register' && (
+            <div>
+              <div className="text-center mb-6">
+                <h2 className="text-2xl font-bold text-white">Create Your Account</h2>
+                <p className="text-xs text-slate-400 mt-1">
+                  Select your role below to register with SnepStudio
+                </p>
+              </div>
+
+              {/* Strict Role Selection: Customer vs Employee ONLY (No Admin!) */}
+              <div className="grid grid-cols-2 gap-3 p-1.5 bg-[#0b0d14] rounded-2xl border border-white/10 mb-8 max-w-md mx-auto">
+                <button
+                  type="button"
+                  onClick={() => { setRegRole('customer'); resetMessages(); }}
+                  className={`py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                    regRole === 'customer'
+                      ? 'bg-amber-400 text-slate-950 shadow-md shadow-amber-500/20'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <User className="w-4 h-4" />
+                  <span>Customer</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => { setRegRole('employee'); resetMessages(); }}
+                  className={`py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                    regRole === 'employee'
+                      ? 'bg-amber-400 text-slate-950 shadow-md shadow-amber-500/20'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Briefcase className="w-4 h-4" />
+                  <span>Employee / Crew</span>
+                </button>
+              </div>
+
+              {/* Alert Feedback */}
+              {errorMessage && (
+                <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs flex items-center gap-3">
+                  <AlertCircle className="w-5 h-5 shrink-0 text-red-400" />
+                  <span>{errorMessage}</span>
+                </div>
+              )}
+
+              {successMessage && (
+                <div className="mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-3">
+                  <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-400" />
+                  <span>{successMessage}</span>
+                </div>
+              )}
+
+              {/* Registration Form */}
+              <form onSubmit={handleRegister} className="space-y-4 max-w-2xl mx-auto">
+                
+                {/* Full Name */}
+                <div>
+                  <label className="block text-xs uppercase font-bold text-slate-300 mb-1">
+                    Full Name <span className="text-amber-400">*</span>
+                  </label>
+                  <div className="relative">
+                    <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+                    <input
+                      type="text"
+                      required
+                      value={regFullName}
+                      onChange={(e) => setRegFullName(e.target.value)}
+                      placeholder={regRole === 'customer' ? 'e.g., Rohan Sharma' : 'e.g., Arjun Mehta'}
+                      className="w-full bg-[#181d2a] border border-white/15 rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-400"
+                    />
+                  </div>
+                </div>
+
+                {/* Email and Phone */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs uppercase font-bold text-slate-300 mb-1">
+                      Email Address <span className="text-amber-400">*</span>
+                    </label>
+                    <div className="relative">
+                      <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+                      <input
+                        type="email"
+                        required
+                        value={regEmail}
+                        onChange={(e) => setRegEmail(e.target.value)}
+                        placeholder="your.email@example.com"
+                        className="w-full bg-[#181d2a] border border-white/15 rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-400"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs uppercase font-bold text-slate-300 mb-1">
+                      Phone Number <span className="text-amber-400">*</span>
+                    </label>
+                    <div className="relative">
+                      <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+                      <input
+                        type="tel"
+                        required
+                        value={regPhone}
+                        onChange={(e) => setRegPhone(e.target.value)}
+                        placeholder="+91 98765 43210"
+                        className="w-full bg-[#181d2a] border border-white/15 rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-400"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Address */}
+                <div>
+                  <label className="block text-xs uppercase font-bold text-slate-300 mb-1">
+                    Address / Location <span className="text-amber-400">*</span>
+                  </label>
+                  <div className="relative">
+                    <MapPin className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+                    <input
+                      type="text"
+                      required
+                      value={regAddress}
+                      onChange={(e) => setRegAddress(e.target.value)}
+                      placeholder="e.g., Bandra West, Mumbai, Maharashtra"
+                      className="w-full bg-[#181d2a] border border-white/15 rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-400"
+                    />
+                  </div>
+                </div>
+
+                {/* Employee Specialization / Designation */}
+                {regRole === 'employee' && (
+                  <div>
+                    <label className="block text-xs uppercase font-bold text-slate-300 mb-1">
+                      Staff Role / Designation <span className="text-amber-400">*</span>
+                    </label>
+                    <select
+                      value={regDesignation}
+                      onChange={(e) => setRegDesignation(e.target.value)}
+                      className="w-full bg-[#181d2a] border border-white/15 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-amber-400 cursor-pointer"
+                    >
+                      <option value="Lead Photographer">Lead Photographer</option>
+                      <option value="Cinematographer">Cinematographer</option>
+                      <option value="Drone Pilot">Drone Pilot</option>
+                      <option value="Senior Colorist / Video Editor">Senior Colorist / Video Editor</option>
+                      <option value="Studio Assistant">Studio Assistant</option>
+                    </select>
+                  </div>
+                )}
+
+                {/* Password and Confirm Password */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs uppercase font-bold text-slate-300 mb-1">
+                      Password <span className="text-amber-400">*</span>
+                    </label>
+                    <div className="relative">
+                      <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        required
+                        value={regPassword}
+                        onChange={(e) => setRegPassword(e.target.value)}
+                        placeholder="Create strong password"
+                        className="w-full bg-[#181d2a] border border-white/15 rounded-xl pl-10 pr-10 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-400"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3.5 top-3.5 text-slate-400 hover:text-white"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs uppercase font-bold text-slate-300 mb-1">
+                      Confirm Password <span className="text-amber-400">*</span>
+                    </label>
+                    <div className="relative">
+                      <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        required
+                        value={regConfirmPassword}
+                        onChange={(e) => setRegConfirmPassword(e.target.value)}
+                        placeholder="Re-enter password"
+                        className="w-full bg-[#181d2a] border border-white/15 rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-400"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Submit Button */}
+                <button
+                  type="submit"
+                  className="w-full bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-bold py-4 rounded-xl text-xs uppercase tracking-wider transition-all shadow-lg shadow-amber-500/20 cursor-pointer flex items-center justify-center gap-2 mt-6"
+                >
+                  <UserPlus className="w-4 h-4 stroke-[2.5]" />
+                  <span>{regRole === 'customer' ? 'Create Customer Account' : 'Register as Studio Staff'}</span>
+                </button>
+              </form>
+
+              <div className="mt-6 text-center text-xs text-slate-400">
+                Already have an account?{' '}
+                <button
+                  type="button"
+                  onClick={() => { setMode('login'); resetMessages(); }}
+                  className="text-amber-400 font-bold hover:underline cursor-pointer"
+                >
+                  Login here
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ============================================================== */}
+          {/* 2. LOGIN VIEW (Customer, Employee, and Separate Admin Login)   */}
+          {/* ============================================================== */}
+          {mode === 'login' && (
+            <div>
+              <div className="text-center mb-6">
+                <h2 className="text-2xl font-bold text-white">Sign In to Your Account</h2>
+                <p className="text-xs text-slate-400 mt-1">
+                  Choose your account type to proceed
+                </p>
+              </div>
+
+              {/* 3 Login Tabs: Customer, Employee, Admin */}
+              <div className="grid grid-cols-3 gap-2 p-1.5 bg-[#0b0d14] rounded-2xl border border-white/10 mb-8 max-w-lg mx-auto">
+                <button
+                  type="button"
+                  onClick={() => { setLoginRole('customer'); resetMessages(); setLoginIdentifier(''); setLoginPassword(''); }}
+                  className={`py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    loginRole === 'customer'
+                      ? 'bg-amber-400 text-slate-950 shadow-md shadow-amber-500/20'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <User className="w-4 h-4" />
+                  <span>Customer</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => { setLoginRole('employee'); resetMessages(); setLoginIdentifier(''); setLoginPassword(''); }}
+                  className={`py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    loginRole === 'employee'
+                      ? 'bg-amber-400 text-slate-950 shadow-md shadow-amber-500/20'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Briefcase className="w-4 h-4" />
+                  <span>Employee</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => { setLoginRole('admin'); resetMessages(); setLoginIdentifier('admin@snepstudio.com'); setLoginPassword('admin123'); }}
+                  className={`py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    loginRole === 'admin'
+                      ? 'bg-amber-400 text-slate-950 shadow-md shadow-amber-500/20'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Shield className="w-4 h-4" />
+                  <span>Admin</span>
+                </button>
+              </div>
+
+              {/* Alert Feedback */}
+              {errorMessage && (
+                <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs flex items-center gap-3">
+                  <AlertCircle className="w-5 h-5 shrink-0 text-red-400" />
+                  <span>{errorMessage}</span>
+                </div>
+              )}
+
+              {successMessage && (
+                <div className="mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-3">
+                  <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-400" />
+                  <span>{successMessage}</span>
+                </div>
+              )}
+
+              {/* Login Form */}
+              <form onSubmit={handleLogin} className="space-y-4 max-w-md mx-auto">
+                
+                {/* Identifier Input */}
+                <div>
+                  <label className="block text-xs uppercase font-bold text-slate-300 mb-1">
+                    {loginRole === 'employee' ? 'Employee ID or Email' : loginRole === 'admin' ? 'Admin Email / Username' : 'Customer Email Address'} <span className="text-amber-400">*</span>
+                  </label>
+                  <div className="relative">
+                    {loginRole === 'employee' ? (
+                      <Briefcase className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+                    ) : loginRole === 'admin' ? (
+                      <Shield className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+                    ) : (
+                      <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+                    )}
+                    <input
+                      type="text"
+                      required
+                      value={loginIdentifier}
+                      onChange={(e) => setLoginIdentifier(e.target.value)}
+                      placeholder={
+                        loginRole === 'employee' 
+                          ? 'e.g., EMP-0001 or employee email' 
+                          : loginRole === 'admin'
+                          ? 'admin@snepstudio.com'
+                          : 'your.email@example.com'
+                      }
+                      className="w-full bg-[#181d2a] border border-white/15 rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-400"
+                    />
+                  </div>
+                </div>
+
+                {/* Password Input */}
+                <div>
+                  <label className="block text-xs uppercase font-bold text-slate-300 mb-1">
+                    Password <span className="text-amber-400">*</span>
+                  </label>
+                  <div className="relative">
+                    <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      placeholder="Enter account password"
+                      className="w-full bg-[#181d2a] border border-white/15 rounded-xl pl-10 pr-10 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-400"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3.5 top-3.5 text-slate-400 hover:text-white"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Login Button */}
+                <button
+                  type="submit"
+                  className="w-full bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-bold py-4 rounded-xl text-xs uppercase tracking-wider transition-all shadow-lg shadow-amber-500/20 cursor-pointer flex items-center justify-center gap-2 mt-6"
+                >
+                  <LogIn className="w-4 h-4 stroke-[2.5]" />
+                  <span>
+                    {loginRole === 'admin' 
+                      ? 'Sign In to Admin Dashboard' 
+                      : loginRole === 'employee' 
+                      ? 'Sign In to Employee Portal' 
+                      : 'Sign In to Customer Dashboard'}
+                  </span>
+                </button>
+              </form>
+
+              {/* B.Tech College Project Demo Quick-Fill Bar */}
+              <div className="mt-8 pt-6 border-t border-white/10 max-w-md mx-auto">
+                <div className="flex items-center gap-2 mb-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                  <span>1-Click Demo Accounts (College Project Evaluation)</span>
+                </div>
+                
+                <div className="grid grid-cols-3 gap-2 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => fillDemoCredentials('customer')}
+                    className="p-2.5 rounded-xl bg-white/5 hover:bg-amber-400/20 hover:text-amber-300 border border-white/10 transition-colors text-slate-300 text-center font-medium cursor-pointer"
+                  >
+                    <span className="block font-bold text-white">Customer</span>
+                    <span className="text-[10px] text-slate-400 font-mono">rohan@sharma</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => fillDemoCredentials('employee')}
+                    className="p-2.5 rounded-xl bg-white/5 hover:bg-amber-400/20 hover:text-amber-300 border border-white/10 transition-colors text-slate-300 text-center font-medium cursor-pointer"
+                  >
+                    <span className="block font-bold text-white">Employee</span>
+                    <span className="text-[10px] text-slate-400 font-mono">EMP-0001</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => fillDemoCredentials('admin')}
+                    className="p-2.5 rounded-xl bg-white/5 hover:bg-amber-400/20 hover:text-amber-300 border border-white/10 transition-colors text-slate-300 text-center font-medium cursor-pointer"
+                  >
+                    <span className="block font-bold text-white">Admin</span>
+                    <span className="text-[10px] text-slate-400 font-mono">admin@snep</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Bottom switch to Register */}
+              <div className="mt-6 text-center text-xs text-slate-400">
+                Don't have an account?{' '}
+                <button
+                  type="button"
+                  onClick={() => { setMode('register'); resetMessages(); }}
+                  className="text-amber-400 font-bold hover:underline cursor-pointer"
+                >
+                  Create Customer or Employee Account
+                </button>
+              </div>
+
+            </div>
+          )}
+
+        </div>
+      </div>
+
     </div>
   );
 };

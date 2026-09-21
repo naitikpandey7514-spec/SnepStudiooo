@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Upload, FileImage, FileVideo, CheckCircle2, Sparkles, Send } from 'lucide-react';
+import { Upload, FileImage, FileVideo, CheckCircle2, Sparkles, Send, HardDrive, Zap } from 'lucide-react';
 import { AppointmentRecord } from '../types';
+import { ResumableChunkUploader, ChunkUploadProgress } from '../utils/chunkedUpload';
 
 interface UploadViewProps {
   bookings: AppointmentRecord[];
@@ -25,7 +26,9 @@ export const UploadView: React.FC<UploadViewProps> = ({
   const [service, setService] = useState<string>('Photo Editing');
   const [message, setMessage] = useState<string>('');
   const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [chunkProgress, setChunkProgress] = useState<ChunkUploadProgress | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
+  const [compressionMode, setCompressionMode] = useState<'lossless_preview' | 'balanced'>('lossless_preview');
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -41,26 +44,45 @@ export const UploadView: React.FC<UploadViewProps> = ({
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsUploading(true);
+    if (!selectedFile) return;
 
-    const filename = selectedFile?.name || (fileType === 'Photo' ? 'raw_client_photo.jpg' : 'raw_client_clip.mp4');
+    setIsUploading(true);
     const appointmentId = selectedBookingId !== 'none' ? Number(selectedBookingId) : null;
 
-    setTimeout(() => {
-      onUploadSuccess({
-        filename,
-        file_type: fileType,
-        service: selectedBookingId !== 'none' 
-          ? (bookings.find(b => b.id === appointmentId)?.service || service) 
-          : service,
-        appointment_id: appointmentId,
-        description: message || 'Standard retouching and color correction requested.'
+    try {
+      const uploader = new ResumableChunkUploader(selectedFile, {
+        chunkSizeBytes: 5 * 1024 * 1024, // 5MB chunks (handles up to 25 GB)
+        onProgress: (progress) => {
+          setChunkProgress(progress);
+        },
+        onComplete: (info) => {
+          setIsUploading(false);
+          setChunkProgress(null);
+          onUploadSuccess({
+            filename: info.filename,
+            file_type: fileType,
+            service: selectedBookingId !== 'none' 
+              ? (bookings.find(b => b.id === appointmentId)?.service || service) 
+              : service,
+            appointment_id: appointmentId,
+            description: message || 'High-resolution upload processed with chunked storage engine.'
+          });
+          setSuccess(true);
+        },
+        onError: (err) => {
+          console.error(err);
+          setIsUploading(false);
+          alert('Upload failed. Please try again.');
+        }
       });
+
+      await uploader.start();
+    } catch (err) {
+      console.error(err);
       setIsUploading(false);
-      setSuccess(true);
-    }, 800);
+    }
   };
 
   return (
@@ -196,14 +218,74 @@ export const UploadView: React.FC<UploadViewProps> = ({
               />
             </div>
 
+            {/* Compression Options */}
+            <div className="bg-[#171b26] p-4 rounded-xl border border-white/10 space-y-2">
+              <span className="font-bold uppercase tracking-wider text-slate-300 block text-[11px]">
+                Studio Compression &amp; Master Archiving
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                <label className={`p-2.5 rounded-lg border cursor-pointer flex items-start gap-2 ${
+                  compressionMode === 'lossless_preview' ? 'border-amber-400 bg-amber-400/10' : 'border-white/10 bg-white/5'
+                }`}>
+                  <input
+                    type="radio"
+                    name="compression"
+                    checked={compressionMode === 'lossless_preview'}
+                    onChange={() => setCompressionMode('lossless_preview')}
+                    className="mt-0.5"
+                  />
+                  <div>
+                    <span className="font-semibold text-white block">Lossless Master + Web Preview</span>
+                    <span className="text-[11px] text-slate-400">Stores full-size master while creating optimized web copies for fast client review.</span>
+                  </div>
+                </label>
+
+                <label className={`p-2.5 rounded-lg border cursor-pointer flex items-start gap-2 ${
+                  compressionMode === 'balanced' ? 'border-amber-400 bg-amber-400/10' : 'border-white/10 bg-white/5'
+                }`}>
+                  <input
+                    type="radio"
+                    name="compression"
+                    checked={compressionMode === 'balanced'}
+                    onChange={() => setCompressionMode('balanced')}
+                    className="mt-0.5"
+                  />
+                  <div>
+                    <span className="font-semibold text-white block">High-Efficiency Delivery</span>
+                    <span className="text-[11px] text-slate-400">Optimizes photo/video footprint for fast mobile download without perceptible loss.</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            {/* Chunk Upload Progress */}
+            {isUploading && chunkProgress && (
+              <div className="p-4 rounded-xl bg-amber-400/10 border border-amber-400/30 text-xs space-y-2">
+                <div className="flex items-center justify-between text-amber-400 font-bold">
+                  <span>Chunking Stream: Slice {chunkProgress.currentChunk} of {chunkProgress.totalChunks}</span>
+                  <span>{chunkProgress.percent}% ({chunkProgress.speedMbps} Mbps)</span>
+                </div>
+                <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                  <div className="bg-amber-400 h-2 transition-all duration-200" style={{ width: `${chunkProgress.percent}%` }} />
+                </div>
+                <p className="text-[11px] text-slate-300">
+                  Resumable multi-part upload streaming to studio bucket. Supports up to 25 GB without memory crash.
+                </p>
+              </div>
+            )}
+
             {/* Submit */}
             <button
               type="submit"
-              disabled={isUploading}
-              className="w-full bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-bold py-4 rounded-xl text-xs uppercase tracking-wider transition-all shadow-lg shadow-amber-500/20 cursor-pointer flex items-center justify-center gap-2"
+              disabled={isUploading || !selectedFile}
+              className={`w-full font-bold py-4 rounded-xl text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
+                isUploading || !selectedFile
+                  ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 shadow-lg shadow-amber-500/20 cursor-pointer'
+              }`}
             >
               {isUploading ? (
-                <span>Uploading to Secure Studio Storage...</span>
+                <span>Streaming Chunks to Studio Storage...</span>
               ) : (
                 <>
                   <Send className="w-4 h-4" />

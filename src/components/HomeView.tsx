@@ -1,17 +1,20 @@
 import React from 'react';
-import { Camera, ArrowRight, Sparkles, CheckCircle2, Star, Calendar, Download, Film, ShieldCheck, CheckSquare, FolderCheck } from 'lucide-react';
+import { Camera, ArrowRight, Sparkles, CheckCircle2, Star, Calendar, Download, Film, ShieldCheck, CheckSquare, FolderCheck, MapPin, Phone, Mail, Clock } from 'lucide-react';
 import { STUDIO_SERVICES, GALLERY_ITEMS, TESTIMONIALS } from '../data/photographyData';
+import { StudioShopProfile } from '../types';
 
 interface HomeViewProps {
   onNavigate: (page: string) => void;
   onOpenBookingModal: (service?: string) => void;
   onOpenGalleryItem?: (photo: any) => void;
+  shopProfile?: StudioShopProfile;
 }
 
 export const HomeView: React.FC<HomeViewProps> = ({
   onNavigate,
   onOpenBookingModal,
   onOpenGalleryItem,
+  shopProfile,
 }) => {
   return (
     <div className="flex flex-col bg-[#0b0d12] text-slate-100 selection:bg-amber-400 selection:text-slate-950">
@@ -525,7 +528,115 @@ export const HomeView: React.FC<HomeViewProps> = ({
       </section>
 
       {/* ============================================================== */}
-      {/* 8. CALL TO ACTION BANNER                                       */}
+      {/* 8. STUDIO HEADQUARTERS & VISIT US                              */}
+      {/* ============================================================== */}
+      <section className="py-20 bg-[#090b10] border-t border-white/5">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-2xl mx-auto mb-14">
+            <span className="text-amber-400 text-xs font-bold uppercase tracking-widest">
+              Visit Our Flagship Studio
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mt-2 mb-3">
+              Studio Location &amp; Contact Info
+            </h2>
+            <p className="text-slate-400 text-sm">
+              Walk into our state-of-the-art studio for wedding consultations, portrait sessions, or portfolio screenings.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Address Card */}
+            <div className="bg-[#121620] border border-white/10 rounded-2xl p-6 flex flex-col justify-between hover:border-amber-400/40 transition-colors">
+              <div>
+                <div className="w-10 h-10 rounded-xl bg-amber-400/10 text-amber-400 flex items-center justify-center font-bold mb-4">
+                  <MapPin className="w-5 h-5" />
+                </div>
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-2">
+                  Studio Address
+                </h3>
+                <p className="text-slate-300 text-xs leading-relaxed">
+                  {shopProfile 
+                    ? `${shopProfile.street_address}, ${shopProfile.landmark}, ${shopProfile.city}, ${shopProfile.state} - ${shopProfile.pincode}`
+                    : 'Plot 42, Floor 2, Creative Arts Enclave, Off Linking Road, Near Starbucks & Mehboob Studios, Bandra West, Mumbai, Maharashtra - 400050'}
+                </p>
+              </div>
+              <div className="pt-4 mt-4 border-t border-white/5 text-[11px] text-amber-400 font-semibold">
+                Bandra West, Mumbai
+              </div>
+            </div>
+
+            {/* Phone Card */}
+            <div className="bg-[#121620] border border-white/10 rounded-2xl p-6 flex flex-col justify-between hover:border-amber-400/40 transition-colors">
+              <div>
+                <div className="w-10 h-10 rounded-xl bg-amber-400/10 text-amber-400 flex items-center justify-center font-bold mb-4">
+                  <Phone className="w-5 h-5" />
+                </div>
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-2">
+                  Hotline &amp; WhatsApp
+                </h3>
+                <p className="text-slate-300 text-xs leading-relaxed mb-1">
+                  Connect directly with our senior shoot director or reservation desk.
+                </p>
+                <a 
+                  href={`tel:${shopProfile?.phone_primary || '+919876543210'}`}
+                  className="font-mono font-bold text-amber-400 text-sm hover:underline block mt-2"
+                >
+                  {shopProfile?.phone_primary || '+91 98765 43210'}
+                </a>
+              </div>
+              <div className="pt-4 mt-4 border-t border-white/5 text-[11px] text-slate-400">
+                Direct Hotline &amp; WhatsApp Call
+              </div>
+            </div>
+
+            {/* Email Card */}
+            <div className="bg-[#121620] border border-white/10 rounded-2xl p-6 flex flex-col justify-between hover:border-amber-400/40 transition-colors">
+              <div>
+                <div className="w-10 h-10 rounded-xl bg-amber-400/10 text-amber-400 flex items-center justify-center font-bold mb-4">
+                  <Mail className="w-5 h-5" />
+                </div>
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-2">
+                  Official Email
+                </h3>
+                <p className="text-slate-300 text-xs leading-relaxed mb-1">
+                  Send wedding briefs, raw footage links, or commercial inquiries.
+                </p>
+                <a 
+                  href={`mailto:${shopProfile?.email || 'contact@snepstudio.com'}`}
+                  className="font-mono font-bold text-amber-400 text-xs hover:underline block mt-2 break-all"
+                >
+                  {shopProfile?.email || 'contact@snepstudio.com'}
+                </a>
+              </div>
+              <div className="pt-4 mt-4 border-t border-white/5 text-[11px] text-slate-400">
+                2-4 Hour Response Time
+              </div>
+            </div>
+
+            {/* Working Hours Card */}
+            <div className="bg-[#121620] border border-white/10 rounded-2xl p-6 flex flex-col justify-between hover:border-amber-400/40 transition-colors">
+              <div>
+                <div className="w-10 h-10 rounded-xl bg-amber-400/10 text-amber-400 flex items-center justify-center font-bold mb-4">
+                  <Clock className="w-5 h-5" />
+                </div>
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-2">
+                  Operating Hours
+                </h3>
+                <p className="text-slate-300 text-xs leading-relaxed">
+                  {shopProfile?.operating_hours || 'Monday – Sunday: 09:00 AM – 09:00 PM (Shoot crews 24/7 on request)'}
+                </p>
+              </div>
+              <div className="pt-4 mt-4 border-t border-white/5 flex items-center gap-1.5 text-[11px] text-emerald-400 font-semibold">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span>Open 7 Days a Week</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ============================================================== */}
+      {/* 9. CALL TO ACTION BANNER                                       */}
       {/* ============================================================== */}
       <section className="relative py-24 overflow-hidden border-t border-white/10">
         <div 

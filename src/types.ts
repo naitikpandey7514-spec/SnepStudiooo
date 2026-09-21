@@ -6,8 +6,21 @@ export interface UserRecord {
   address: string;
   created_at: string;
   role?: 'customer' | 'admin' | 'employee';
+  employee_id?: string; // Unique employee ID like EMP-0001
   designation?: string;
-  has_logged_in?: boolean; // One-time login validation indicator
+  last_login_at?: string;
+}
+
+export interface StoredAuthAccount {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  role: 'customer' | 'admin' | 'employee';
+  employee_id?: string; // EMP-0001, EMP-0002...
+  passwordHash: string;
+  created_at: string;
   last_login_at?: string;
 }
 
@@ -61,6 +74,8 @@ export interface AppointmentRecord {
   payment_id: number;
   amount: number;
   payment_method?: string;
+  assigned_employee_id?: string;
+  assigned_employee_name?: string;
 }
 
 export interface WorkRecord {
@@ -75,6 +90,8 @@ export interface WorkRecord {
   status: 'Pending' | 'In Progress' | 'Completed';
   completed_filename?: string;
   created_at: string;
+  assigned_employee_id?: string;
+  assigned_employee_name?: string;
 }
 
 export interface PaymentRecord {

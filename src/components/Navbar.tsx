@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Camera, Menu, X, User, LogOut, Calendar, Image as ImageIcon, Sparkles, Upload, CheckSquare, ShieldCheck, Building2, Briefcase } from 'lucide-react';
+import { Camera, Menu, X, User, LogOut, Calendar, Sparkles, Upload, CheckSquare, ShieldCheck, Briefcase, FileText } from 'lucide-react';
 import { UserRecord } from '../types';
 
 interface NavbarProps {
@@ -36,7 +36,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           
           {/* Studio Brand */}
           <div 
-            onClick={() => handleNavClick('home')}
+            onClick={() => handleNavClick(currentUser?.role === 'employee' ? 'employee-dashboard' : currentUser?.role === 'admin' ? 'admin-dashboard' : 'home')}
             className="flex items-center gap-3 cursor-pointer group"
           >
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-slate-950 shadow-lg shadow-amber-500/20 group-hover:scale-105 transition-transform">
@@ -57,12 +57,14 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Desktop Navigation Links */}
           <div className="hidden lg:flex items-center gap-1">
             {!currentUser ? (
-              // Before Login
+              // --------------------------------------------------------
+              // Public Navigation (Required: Home, Services, About, My Work, Login, Register)
+              // --------------------------------------------------------
               <>
                 <button
                   onClick={() => handleNavClick('home')}
                   className={`px-3.5 py-2 text-sm font-medium transition-colors cursor-pointer ${
-                    activePage === 'home' ? 'text-amber-400 font-semibold' : 'text-slate-300 hover:text-white'
+                    activePage === 'home' ? 'text-amber-400 font-bold' : 'text-slate-300 hover:text-white'
                   }`}
                 >
                   Home
@@ -70,40 +72,34 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <button
                   onClick={() => handleNavClick('services')}
                   className={`px-3.5 py-2 text-sm font-medium transition-colors cursor-pointer ${
-                    activePage === 'services' ? 'text-amber-400 font-semibold' : 'text-slate-300 hover:text-white'
+                    activePage === 'services' ? 'text-amber-400 font-bold' : 'text-slate-300 hover:text-white'
                   }`}
                 >
                   Services
                 </button>
                 <button
-                  onClick={() => handleNavClick('gallery')}
-                  className={`px-3.5 py-2 text-sm font-medium transition-colors cursor-pointer ${
-                    activePage === 'gallery' ? 'text-amber-400 font-semibold' : 'text-slate-300 hover:text-white'
-                  }`}
-                >
-                  Gallery
-                </button>
-                <button
                   onClick={() => handleNavClick('about')}
                   className={`px-3.5 py-2 text-sm font-medium transition-colors cursor-pointer ${
-                    activePage === 'about' ? 'text-amber-400 font-semibold' : 'text-slate-300 hover:text-white'
+                    activePage === 'about' ? 'text-amber-400 font-bold' : 'text-slate-300 hover:text-white'
                   }`}
                 >
                   About
                 </button>
                 <button
-                  onClick={() => handleNavClick('contact')}
+                  onClick={() => handleNavClick('my-work')}
                   className={`px-3.5 py-2 text-sm font-medium transition-colors cursor-pointer ${
-                    activePage === 'contact' ? 'text-amber-400 font-semibold' : 'text-slate-300 hover:text-white'
+                    activePage === 'my-work' ? 'text-amber-400 font-bold' : 'text-slate-300 hover:text-white'
                   }`}
                 >
-                  Contact
+                  My Work
                 </button>
+                
                 <div className="h-4 w-px bg-white/10 mx-2" />
+
                 <button
                   onClick={() => handleNavClick('login')}
                   className={`px-3.5 py-2 text-sm font-medium transition-colors cursor-pointer ${
-                    activePage === 'login' ? 'text-amber-400 font-semibold' : 'text-slate-300 hover:text-white'
+                    activePage === 'login' ? 'text-amber-400 font-bold' : 'text-slate-300 hover:text-white'
                   }`}
                 >
                   Login
@@ -111,19 +107,84 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <button
                   onClick={() => handleNavClick('register')}
                   className={`px-3.5 py-2 text-sm font-medium transition-colors cursor-pointer ${
-                    activePage === 'register' ? 'text-amber-400 font-semibold' : 'text-slate-300 hover:text-white'
+                    activePage === 'register' ? 'text-amber-400 font-bold' : 'text-slate-300 hover:text-white'
                   }`}
                 >
                   Register
                 </button>
               </>
+            ) : currentUser.role === 'employee' ? (
+              // --------------------------------------------------------
+              // Employee Navigation
+              // --------------------------------------------------------
+              <>
+                <button
+                  onClick={() => handleNavClick('employee-dashboard')}
+                  className={`px-3.5 py-2 text-sm font-medium transition-colors cursor-pointer flex items-center gap-1.5 ${
+                    activePage === 'employee-dashboard' ? 'text-amber-400 font-bold' : 'text-slate-300 hover:text-white'
+                  }`}
+                >
+                  <Briefcase className="w-4 h-4" />
+                  <span>Employee Dashboard</span>
+                </button>
+                <button
+                  onClick={() => handleNavClick('my-work')}
+                  className={`px-3.5 py-2 text-sm font-medium transition-colors cursor-pointer ${
+                    activePage === 'my-work' ? 'text-amber-400 font-bold' : 'text-slate-300 hover:text-white'
+                  }`}
+                >
+                  Studio Work Queue
+                </button>
+                <button
+                  onClick={() => handleNavClick('photo-selection')}
+                  className={`px-3.5 py-2 text-sm font-medium transition-colors cursor-pointer flex items-center gap-1.5 ${
+                    activePage === 'photo-selection' ? 'text-amber-400 font-bold' : 'text-slate-300 hover:text-white'
+                  }`}
+                >
+                  <CheckSquare className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Client Proofing</span>
+                </button>
+              </>
+            ) : currentUser.role === 'admin' ? (
+              // --------------------------------------------------------
+              // Admin Navigation
+              // --------------------------------------------------------
+              <>
+                <button
+                  onClick={() => handleNavClick('admin-dashboard')}
+                  className={`px-3.5 py-2 text-sm font-medium transition-colors cursor-pointer flex items-center gap-1.5 ${
+                    activePage === 'admin-dashboard' ? 'text-amber-400 font-bold' : 'text-slate-300 hover:text-white'
+                  }`}
+                >
+                  <ShieldCheck className="w-4 h-4 text-amber-400" />
+                  <span>Admin Dashboard</span>
+                </button>
+                <button
+                  onClick={() => handleNavClick('services')}
+                  className={`px-3.5 py-2 text-sm font-medium transition-colors cursor-pointer ${
+                    activePage === 'services' ? 'text-amber-400 font-bold' : 'text-slate-300 hover:text-white'
+                  }`}
+                >
+                  Services
+                </button>
+                <button
+                  onClick={() => handleNavClick('home')}
+                  className={`px-3.5 py-2 text-sm font-medium transition-colors cursor-pointer ${
+                    activePage === 'home' ? 'text-amber-400 font-bold' : 'text-slate-300 hover:text-white'
+                  }`}
+                >
+                  Studio Site
+                </button>
+              </>
             ) : (
-              // After Customer Login
+              // --------------------------------------------------------
+              // Customer Navigation
+              // --------------------------------------------------------
               <>
                 <button
                   onClick={() => handleNavClick('home')}
                   className={`px-3 py-2 text-sm font-medium transition-colors cursor-pointer ${
-                    activePage === 'home' ? 'text-amber-400 font-semibold' : 'text-slate-300 hover:text-white'
+                    activePage === 'home' ? 'text-amber-400 font-bold' : 'text-slate-300 hover:text-white'
                   }`}
                 >
                   Home
@@ -131,101 +192,103 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <button
                   onClick={() => handleNavClick('services')}
                   className={`px-3 py-2 text-sm font-medium transition-colors cursor-pointer ${
-                    activePage === 'services' ? 'text-amber-400 font-semibold' : 'text-slate-300 hover:text-white'
+                    activePage === 'services' ? 'text-amber-400 font-bold' : 'text-slate-300 hover:text-white'
                   }`}
                 >
                   Services
                 </button>
                 <button
-                  onClick={() => handleNavClick('my-bookings')}
+                  onClick={() => handleNavClick('about')}
                   className={`px-3 py-2 text-sm font-medium transition-colors cursor-pointer ${
-                    activePage === 'my-bookings' ? 'text-amber-400 font-semibold' : 'text-slate-300 hover:text-white'
+                    activePage === 'about' ? 'text-amber-400 font-bold' : 'text-slate-300 hover:text-white'
                   }`}
                 >
-                  My Bookings
+                  About
+                </button>
+                <button
+                  onClick={() => handleNavClick('dashboard')}
+                  className={`px-3 py-2 text-sm font-medium transition-colors cursor-pointer ${
+                    activePage === 'dashboard' ? 'text-amber-400 font-bold' : 'text-slate-300 hover:text-white'
+                  }`}
+                >
+                  Dashboard
+                </button>
+                <button
+                  onClick={() => handleNavClick('my-bookings')}
+                  className={`px-3 py-2 text-sm font-medium transition-colors cursor-pointer ${
+                    activePage === 'my-bookings' ? 'text-amber-400 font-bold' : 'text-slate-300 hover:text-white'
+                  }`}
+                >
+                  Bookings
                 </button>
                 <button
                   onClick={() => handleNavClick('my-work')}
                   className={`px-3 py-2 text-sm font-medium transition-colors cursor-pointer ${
-                    activePage === 'my-work' ? 'text-amber-400 font-semibold' : 'text-slate-300 hover:text-white'
+                    activePage === 'my-work' ? 'text-amber-400 font-bold' : 'text-slate-300 hover:text-white'
                   }`}
                 >
                   My Work
                 </button>
                 <button
-                  onClick={() => handleNavClick('photo-selection')}
-                  className={`px-3 py-2 text-sm font-medium transition-colors cursor-pointer flex items-center gap-1.5 ${
-                    activePage === 'photo-selection' ? 'text-amber-400 font-semibold' : 'text-slate-300 hover:text-white'
-                  }`}
-                >
-                  <CheckSquare className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Photo Selection</span>
-                </button>
-                <button
-                  onClick={() => handleNavClick('edit-photos')}
-                  className={`px-3 py-2 text-sm font-medium transition-colors cursor-pointer flex items-center gap-1.5 ${
-                    activePage === 'edit-photos' ? 'text-amber-400 font-semibold' : 'text-slate-300 hover:text-white'
-                  }`}
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Edit Photos</span>
-                </button>
-                <button
                   onClick={() => handleNavClick('upload')}
-                  className={`px-3 py-2 text-sm font-medium transition-colors cursor-pointer flex items-center gap-1.5 ${
-                    activePage === 'upload' ? 'text-amber-400 font-semibold' : 'text-slate-300 hover:text-white'
+                  className={`px-3 py-2 text-sm font-medium transition-colors cursor-pointer flex items-center gap-1 ${
+                    activePage === 'upload' ? 'text-amber-400 font-bold' : 'text-slate-300 hover:text-white'
                   }`}
                 >
                   <Upload className="w-3.5 h-3.5" />
                   <span>Upload</span>
                 </button>
-                <button
-                  onClick={() => handleNavClick('profile')}
-                  className={`px-3 py-2 text-sm font-medium transition-colors cursor-pointer flex items-center gap-1.5 ${
-                    activePage === 'profile' ? 'text-amber-400 font-semibold' : 'text-slate-300 hover:text-white'
-                  }`}
-                >
-                  <User className="w-3.5 h-3.5" />
-                  <span>Profile</span>
-                </button>
-                <button
-                  onClick={onLogout}
-                  className="px-3 py-2 text-sm font-medium text-red-400 hover:text-red-300 transition-colors cursor-pointer flex items-center gap-1"
-                >
-                  <LogOut className="w-3.5 h-3.5" />
-                  <span>Logout</span>
-                </button>
               </>
             )}
           </div>
 
-          {/* Prominent Action Button: Book Now & Admin/Staff Button */}
-          <div className="hidden sm:flex items-center gap-2">
-            {(currentUser?.role === 'admin' || currentUser?.role === 'employee' || onOpenAdmin) && (
+          {/* Right Area: User Badge / Actions / Book Now Button */}
+          <div className="hidden sm:flex items-center gap-3">
+            {currentUser ? (
+              <div className="flex items-center gap-2">
+                <div className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 flex items-center gap-2 text-xs">
+                  {currentUser.role === 'admin' ? (
+                    <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+                  ) : currentUser.role === 'employee' ? (
+                    <Briefcase className="w-3.5 h-3.5 text-amber-400" />
+                  ) : (
+                    <User className="w-3.5 h-3.5 text-amber-400" />
+                  )}
+                  <span className="text-white font-semibold">{currentUser.name.split(' ')[0]}</span>
+                  <span className="text-[10px] text-amber-400 font-mono uppercase bg-amber-400/10 px-1.5 py-0.5 rounded">
+                    {currentUser.role}
+                  </span>
+                </div>
+
+                <button
+                  onClick={onLogout}
+                  className="px-3 py-1.5 text-xs font-semibold text-slate-400 hover:text-red-400 transition-colors flex items-center gap-1 cursor-pointer"
+                  title="Logout"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>Logout</span>
+                </button>
+              </div>
+            ) : null}
+
+            {/* Book Now Button */}
+            {currentUser?.role !== 'employee' && (
               <button
-                onClick={onOpenAdmin}
-                className="bg-white/10 hover:bg-white/15 text-amber-400 border border-amber-400/30 font-bold px-3.5 py-2 rounded-full text-xs transition-all flex items-center gap-1.5 cursor-pointer"
-                title="Open Studio Staff & Shop Management"
+                onClick={() => onOpenBookingModal()}
+                className="bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-bold px-5 py-2.5 rounded-full text-xs uppercase tracking-wider transition-all shadow-md shadow-amber-500/20 hover:shadow-amber-500/30 hover:scale-[1.02] cursor-pointer"
               >
-                <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
-                <span>{currentUser?.role === 'admin' ? 'Studio Admin' : currentUser?.role === 'employee' ? 'Staff Portal' : 'Admin'}</span>
+                Book Now
               </button>
             )}
-            <button
-              onClick={() => onOpenBookingModal()}
-              className="bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-bold px-5 py-2.5 rounded-full text-xs uppercase tracking-wider transition-all shadow-md shadow-amber-500/20 hover:shadow-amber-500/30 hover:scale-[1.02] cursor-pointer"
-            >
-              Book Now
-            </button>
           </div>
 
-          {/* Mobile Menu Toggle */}
+          {/* Mobile Menu Toggle Button */}
           <div className="flex lg:hidden items-center gap-2">
             <button
               onClick={() => onOpenBookingModal()}
               className="sm:hidden bg-amber-400 text-slate-950 font-bold px-3 py-1.5 rounded-full text-xs"
             >
-              Book Now
+              Book
             </button>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -256,62 +319,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                 Services
               </button>
               <button
-                onClick={() => handleNavClick('gallery')}
-                className={`text-left px-3 py-2.5 rounded-lg text-sm ${activePage === 'gallery' ? 'bg-amber-400/10 text-amber-400 font-bold' : 'text-slate-300'}`}
-              >
-                Gallery
-              </button>
-              <button
                 onClick={() => handleNavClick('about')}
                 className={`text-left px-3 py-2.5 rounded-lg text-sm ${activePage === 'about' ? 'bg-amber-400/10 text-amber-400 font-bold' : 'text-slate-300'}`}
               >
                 About
-              </button>
-              <button
-                onClick={() => handleNavClick('contact')}
-                className={`text-left px-3 py-2.5 rounded-lg text-sm ${activePage === 'contact' ? 'bg-amber-400/10 text-amber-400 font-bold' : 'text-slate-300'}`}
-              >
-                Contact
-              </button>
-              <div className="h-px bg-white/10 my-2" />
-              <button
-                onClick={() => handleNavClick('login')}
-                className="text-left px-3 py-2.5 rounded-lg text-sm text-slate-200"
-              >
-                Login
-              </button>
-              <button
-                onClick={() => handleNavClick('register')}
-                className="text-left px-3 py-2.5 rounded-lg text-sm text-amber-400 font-semibold"
-              >
-                Register
-              </button>
-            </>
-          ) : (
-            <>
-              <div className="px-3 py-2 text-xs text-slate-400 border-b border-white/5 mb-1 flex items-center justify-between">
-                <span>Signed in as <strong className="text-white">{currentUser.name}</strong></span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-400/20 text-amber-400 uppercase">
-                  {currentUser.role || 'Client'}
-                </span>
-              </div>
-              <button
-                onClick={() => handleNavClick('home')}
-                className={`text-left px-3 py-2.5 rounded-lg text-sm ${activePage === 'home' ? 'bg-amber-400/10 text-amber-400 font-bold' : 'text-slate-300'}`}
-              >
-                Home
-              </button>
-              <button
-                onClick={() => handleNavClick('services')}
-                className={`text-left px-3 py-2.5 rounded-lg text-sm ${activePage === 'services' ? 'bg-amber-400/10 text-amber-400 font-bold' : 'text-slate-300'}`}
-              >
-                Services
-              </button>
-              <button
-                onClick={() => handleNavClick('my-bookings')}
-                className={`text-left px-3 py-2.5 rounded-lg text-sm ${activePage === 'my-bookings' ? 'bg-amber-400/10 text-amber-400 font-bold' : 'text-slate-300'}`}
-              >
-                My Bookings
               </button>
               <button
                 onClick={() => handleNavClick('my-work')}
@@ -319,56 +330,114 @@ export const Navbar: React.FC<NavbarProps> = ({
               >
                 My Work
               </button>
+              <div className="h-px bg-white/10 my-2" />
               <button
-                onClick={() => handleNavClick('photo-selection')}
-                className={`text-left px-3 py-2.5 rounded-lg text-sm flex items-center gap-2 ${activePage === 'photo-selection' ? 'bg-amber-400/10 text-amber-400 font-bold' : 'text-slate-300'}`}
+                onClick={() => handleNavClick('login')}
+                className={`text-left px-3 py-2.5 rounded-lg text-sm ${activePage === 'login' ? 'bg-amber-400/10 text-amber-400 font-bold' : 'text-slate-300'}`}
               >
-                <CheckSquare className="w-4 h-4 text-amber-400" />
-                <span>Photo Selection &amp; Proofing</span>
+                Login
               </button>
               <button
-                onClick={() => handleNavClick('edit-photos')}
-                className={`text-left px-3 py-2.5 rounded-lg text-sm flex items-center gap-2 ${activePage === 'edit-photos' ? 'bg-amber-400/10 text-amber-400 font-bold' : 'text-slate-300'}`}
+                onClick={() => handleNavClick('register')}
+                className={`text-left px-3 py-2.5 rounded-lg text-sm ${activePage === 'register' ? 'bg-amber-400/10 text-amber-400 font-bold' : 'text-slate-300'}`}
               >
-                <Sparkles className="w-4 h-4 text-amber-400" />
-                <span>Edit Photos</span>
+                Register
+              </button>
+            </>
+          ) : currentUser.role === 'employee' ? (
+            <>
+              <button
+                onClick={() => handleNavClick('employee-dashboard')}
+                className="text-left px-3 py-2.5 rounded-lg text-sm bg-amber-400/10 text-amber-400 font-bold"
+              >
+                Employee Dashboard
+              </button>
+              <button
+                onClick={() => handleNavClick('my-work')}
+                className="text-left px-3 py-2.5 rounded-lg text-sm text-slate-300"
+              >
+                Studio Work Queue
+              </button>
+              <button
+                onClick={() => handleNavClick('photo-selection')}
+                className="text-left px-3 py-2.5 rounded-lg text-sm text-slate-300"
+              >
+                Client Proofing
+              </button>
+              <button
+                onClick={onLogout}
+                className="text-left px-3 py-2.5 rounded-lg text-sm text-red-400 font-semibold"
+              >
+                Logout ({currentUser.name})
+              </button>
+            </>
+          ) : currentUser.role === 'admin' ? (
+            <>
+              <button
+                onClick={() => handleNavClick('admin-dashboard')}
+                className="text-left px-3 py-2.5 rounded-lg text-sm bg-amber-400/10 text-amber-400 font-bold"
+              >
+                Admin Dashboard
+              </button>
+              <button
+                onClick={() => handleNavClick('services')}
+                className="text-left px-3 py-2.5 rounded-lg text-sm text-slate-300"
+              >
+                Services
+              </button>
+              <button
+                onClick={() => handleNavClick('home')}
+                className="text-left px-3 py-2.5 rounded-lg text-sm text-slate-300"
+              >
+                Studio Site
+              </button>
+              <button
+                onClick={onLogout}
+                className="text-left px-3 py-2.5 rounded-lg text-sm text-red-400 font-semibold"
+              >
+                Logout ({currentUser.name})
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={() => handleNavClick('dashboard')}
+                className="text-left px-3 py-2.5 rounded-lg text-sm bg-amber-400/10 text-amber-400 font-bold"
+              >
+                Dashboard
+              </button>
+              <button
+                onClick={() => handleNavClick('my-bookings')}
+                className="text-left px-3 py-2.5 rounded-lg text-sm text-slate-300"
+              >
+                My Bookings
+              </button>
+              <button
+                onClick={() => handleNavClick('my-work')}
+                className="text-left px-3 py-2.5 rounded-lg text-sm text-slate-300"
+              >
+                My Work
               </button>
               <button
                 onClick={() => handleNavClick('upload')}
-                className={`text-left px-3 py-2.5 rounded-lg text-sm ${activePage === 'upload' ? 'bg-amber-400/10 text-amber-400 font-bold' : 'text-slate-300'}`}
+                className="text-left px-3 py-2.5 rounded-lg text-sm text-slate-300"
               >
-                Upload Photos &amp; Videos
+                Upload Photo/Video
               </button>
               <button
-                onClick={() => handleNavClick('profile')}
-                className={`text-left px-3 py-2.5 rounded-lg text-sm ${activePage === 'profile' ? 'bg-amber-400/10 text-amber-400 font-bold' : 'text-slate-300'}`}
+                onClick={() => handleNavClick('services')}
+                className="text-left px-3 py-2.5 rounded-lg text-sm text-slate-300"
               >
-                Profile
+                Services
               </button>
-              <div className="h-px bg-white/10 my-2" />
               <button
-                onClick={() => {
-                  onLogout();
-                  setMobileMenuOpen(false);
-                }}
-                className="text-left px-3 py-2.5 rounded-lg text-sm text-red-400"
+                onClick={onLogout}
+                className="text-left px-3 py-2.5 rounded-lg text-sm text-red-400 font-semibold"
               >
-                Logout
+                Logout ({currentUser.name})
               </button>
             </>
           )}
-
-          <div className="pt-2">
-            <button
-              onClick={() => {
-                onOpenBookingModal();
-                setMobileMenuOpen(false);
-              }}
-              className="w-full bg-amber-400 text-slate-950 font-bold py-3 rounded-lg text-center text-sm"
-            >
-              Book Now
-            </button>
-          </div>
         </div>
       )}
     </nav>
